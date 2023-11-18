@@ -26,7 +26,8 @@ def load_data(file_path):
             continue
         df_placeholder = pd.read_csv(f)
         df_placeholder = df_placeholder.drop('EndTime', axis=1)
-        df_placeholder['StartTime'] = df_placeholder['StartTime'].str.replace('+00:00Z', '')
+        df_placeholder['StartTime'] = df_placeholder['StartTime'].str.replace(r'\+00:00Z', '', regex=True)
+
 
         # Convert columns to datetime using pd.to_datetime
         df_placeholder['StartTime'] = pd.to_datetime(df_placeholder['StartTime'], format='%Y-%m-%dT%H:%M')
