@@ -2,6 +2,7 @@ import argparse
 import datetime
 import pandas as pd
 from utils import perform_get_request, xml_to_load_dataframe, xml_to_gen_data
+import os
 
 def get_load_data_from_entsoe(regions, periodStart='202302240000', periodEnd='202303240000', output_path='./data'):
     
@@ -92,7 +93,7 @@ def parse_arguments():
     parser.add_argument(
         '--output_path', 
         type=str, 
-        default='./data',
+        default=os.path.join(os.path.split(os.getcwd())[0], 'data'),
         help='Name of the output file'
     )
     return parser.parse_args()
