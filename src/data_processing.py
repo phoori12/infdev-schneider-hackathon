@@ -1,6 +1,7 @@
 import argparse
 import pandas as pd 
-import os 
+import os
+import numpy as np
 from dateutil import parser
 
 COUNTRY_ID_MAP = {
@@ -119,6 +120,11 @@ def remove_outliers_iqr(df, column_name, threshold=1.5):
 
     return cleaned_df
 
+# def remove_rows_with_zero(df):
+#     df_cleaned = df[(df != 0).all(axis=1)]
+#
+#     return df_cleaned
+
 def clean_data(df):
     df_cleaned = missing_values(df)
     df_cleaned = duplicates(df_cleaned)
@@ -140,15 +146,17 @@ def clean_data(df):
         cleaned_dfs.append(country_df)
 
     df_cleaned_final = pd.concat(cleaned_dfs, ignore_index=True)
+    # df_cleaned_final = remove_rows_with_zero(df_cleaned_final)
 
     return df_cleaned_final
 
 
-def preprocess_data(df): # 
+def preprocess_data(df): #
     # TODO: Generate new features, transform existing features, resampling, etc.
     df['StartTime'] = pd.to_datetime(df['StartTime'], format='%Y-%m-%dT%H:%M')
+
     aggregated_values = []
-    
+
     column_mapping = {
         0: 'Surplus_SP',
         1: 'Surplus_UK',
@@ -165,23 +173,27 @@ def preprocess_data(df): #
     for timestamp in df['StartTime'].unique():
         # Filter rows for the current timestamp
         timestamp_data = df[df['StartTime'] == timestamp]
-        
-        # Calculate the result for each country 
+
+        # Calculate the result for each country
         result = timestamp_data.iloc[:, 3:12].sum(axis=1) - timestamp_data['Load']
-        
+
         # Sum up the result for each country
         total_sum = result.groupby(timestamp_data['Country IDs']).sum().to_dict()
 
         # Map column numbers to names
-        total_sum = {column_mapping[key]: value for key, value in total_sum.items()}
+        total_sum_mapped = {column_mapping.get(key, key): value for key, value in total_sum.items()}
+
+        # Print for debugging
+        print("Timestamp:", timestamp)
+        print("Total Sum Mapped:", total_sum_mapped)
 
         # Append the results to the list
-        aggregated_values.append({'StartTime': timestamp, **total_sum})
+        aggregated_values.append({'StartTime': timestamp, **total_sum_mapped})
 
     # Convert the list of dictionaries to a DataFrame
     df_processed = pd.DataFrame(aggregated_values).set_index('StartTime').fillna(0)
+    df_processed = df_processed[(df_processed != 0.0).all(axis=1)] # Remove rows with "0.0"
     df_processed = df_processed.reindex(sorted(df_processed.columns), axis=1)
-
 
     return df_processed
 
