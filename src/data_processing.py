@@ -79,7 +79,8 @@ def load_data(file_path):
         wind_off = quantities.get('B18', 0)
         wind_on = quantities.get('B19', 0)
 
-        load = group['Load'].dropna().iloc[0] if 'Load' in group.columns else 0
+        load = group['Load'].dropna().iloc[0] if ('Load' in group.columns) and (not group['Load'].dropna().empty) else 0
+
 
         df2 = pd.concat([df2, pd.DataFrame([[country_id, start_time, unit_name,
                                              biomass, geothermal, hydro_pump, hydro_run, hydro_water,
