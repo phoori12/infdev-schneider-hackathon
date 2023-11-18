@@ -54,46 +54,41 @@ def load_data(file_path):
             (df.PsrType != 'B20')
             ]
     df.to_csv('../data/TEST.csv', index=False)
-
-
-
-  
     print(df)
 
     df2 = pd.DataFrame(
-        columns=['Country IDs', 'StartTime', 'EndTime', 'UnitName', 'Biomass', 'Geothermal', 'Hydro Pumped Storage',
+        columns=['Country IDs', 'StartTime', 'UnitName', 'Biomass', 'Geothermal', 'Hydro Pumped Storage',
                  'Hydro Run-of-river and poundage', 'Hydro Water Reservoir', 'Maring', 'Solar', 'Wind Offshore',
                  'Wind Onshore', 'Load'])
 
-    # for _, group in df.groupby(['AreaID', 'StartTime', 'EndTime']):
-    #     country_id = COUNTRY_ID_MAP.get(group['AreaID'].iloc[0], 0)
-    #     start_time = group['StartTime'].iloc[0]
-    #     end_time = group['EndTime'].iloc[0]
-    #     unit_name = group['UnitName'].iloc[0]
+    for _, group in df.groupby(['AreaID', 'StartTime']):
+        country_id = COUNTRY_ID_MAP.get(group['AreaID'].iloc[0], 0)
+        start_time = group['StartTime'].iloc[0]
+        unit_name = group['UnitName'].iloc[0]
 
-    #     quantities = dict(zip(group['PsrType'], group['quantity']))
+        quantities = dict(zip(group['PsrType'], group['quantity']))
 
-    #     biomass = quantities.get('B01', 0)
-    #     geothermal = quantities.get('B09', 0)
-    #     hydro_pump = quantities.get('B10', 0)
-    #     hydro_run = quantities.get('B11', 0)
-    #     hydro_water = quantities.get('B12', 0)
-    #     marine = quantities.get('B13', 0)
-    #     solar = quantities.get('B16', 0)
-    #     wind_off = quantities.get('B18', 0)
-    #     wind_on = quantities.get('B19', 0)
+        biomass = quantities.get('B01', 0)
+        geothermal = quantities.get('B09', 0)
+        hydro_pump = quantities.get('B10', 0)
+        hydro_run = quantities.get('B11', 0)
+        hydro_water = quantities.get('B12', 0)
+        marine = quantities.get('B13', 0)
+        solar = quantities.get('B16', 0)
+        wind_off = quantities.get('B18', 0)
+        wind_on = quantities.get('B19', 0)
 
-    #     load = group['Load'].dropna().iloc[0] if 'Load' in group.columns else 0
+        load = group['Load'].dropna().iloc[0] if 'Load' in group.columns else 0
 
-    #     df2 = pd.concat([df2, pd.DataFrame([[country_id, start_time, end_time, unit_name,
-    #                                          biomass, geothermal, hydro_pump, hydro_run, hydro_water,
-    #                                          marine, solar, wind_off, wind_on, load]])], ignore_index=True)
+        df2 = pd.concat([df2, pd.DataFrame([[country_id, start_time, unit_name,
+                                             biomass, geothermal, hydro_pump, hydro_run, hydro_water,
+                                             marine, solar, wind_off, wind_on, load]])], ignore_index=True)
 
-    #     print([country_id, start_time, end_time, unit_name,
-    #            biomass, geothermal, hydro_pump, hydro_run, hydro_water,
-    #            marine, solar, wind_off, wind_on, load])
+        print([country_id, start_time, unit_name,
+               biomass, geothermal, hydro_pump, hydro_run, hydro_water,
+               marine, solar, wind_off, wind_on, load])
 
-    # df2.to_csv('../data/test_formatted.csv', index=False)
+    df2.to_csv('../data/test_formatted.csv', index=False)
 
     return df2
  
