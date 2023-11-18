@@ -147,7 +147,7 @@ def clean_data(df):
 
     df_cleaned_final = pd.concat(cleaned_dfs, ignore_index=True)
     # df_cleaned_final = remove_rows_with_zero(df_cleaned_final)
-
+    df.to_csv('../data/test_clean.csv', index=False)
     return df_cleaned_final
 
 
@@ -170,7 +170,9 @@ def preprocess_data(df): #
         # Add more mappings as needed
     }
 
-    for timestamp in df['StartTime'].unique():
+    unique_timestamps = sorted(df['StartTime'].unique())
+    
+    for timestamp in unique_timestamps:
         # Filter rows for the current timestamp
         timestamp_data = df[df['StartTime'] == timestamp]
 
@@ -184,15 +186,15 @@ def preprocess_data(df): #
         total_sum_mapped = {column_mapping.get(key, key): value for key, value in total_sum.items()}
 
         # Print for debugging
-        print("Timestamp:", timestamp)
-        print("Total Sum Mapped:", total_sum_mapped)
+        #print("Timestamp:", timestamp)
+        #print("Total Sum Mapped:", total_sum_mapped)
 
         # Append the results to the list
         aggregated_values.append({'StartTime': timestamp, **total_sum_mapped})
 
     # Convert the list of dictionaries to a DataFrame
     df_processed = pd.DataFrame(aggregated_values).set_index('StartTime').fillna(0)
-    df_processed = df_processed[(df_processed != 0.0).all(axis=1)] # Remove rows with "0.0"
+    #df_processed = df_processed[(df_processed != 0.0).all(axis=1)] # Remove rows with "0.0"
     df_processed = df_processed.reindex(sorted(df_processed.columns), axis=1)
 
     return df_processed
