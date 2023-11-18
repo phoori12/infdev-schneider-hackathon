@@ -1,12 +1,19 @@
 import argparse
+import pandas as pd 
+import glob 
+import os 
+
+
 
 def load_data(file_path):
-    # TODO: Load data from CSV file
 
+    files = [os.path.join(file_path, file) for file in os.listdir(file_path)]
+    df = pd.concat((pd.read_csv(f) for f in files if f.endswith('csv')), ignore_index=True).reset_index()
+    print(df)
     return df
 
 def clean_data(df):
-    # TODO: Handle missing values, outliers, etc.
+    
 
     return df_clean
 
@@ -43,4 +50,5 @@ def main(input_file, output_file):
 
 if __name__ == "__main__":
     args = parse_arguments()
-    main(args.input_file, args.output_file)
+    ## main(args.input_file, args.output_file)
+    load_data("/home/main/Hackathon/infdev-schneider-hackathon/data")
