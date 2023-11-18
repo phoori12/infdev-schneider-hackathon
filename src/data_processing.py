@@ -7,7 +7,7 @@ def load_data(file_path):
 
 def clean_data(df):
     # TODO: Handle missing values, outliers, etc.
-
+    
     return df_clean
 
 def preprocess_data(df):
@@ -17,6 +17,7 @@ def preprocess_data(df):
 
 def save_data(df, output_file):
     # TODO: Save processed data to a CSV file
+
     pass
 
 def parse_arguments():
