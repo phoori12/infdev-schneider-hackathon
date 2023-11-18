@@ -30,7 +30,7 @@ def get_load_data_from_entsoe(regions, periodStart='202302240000', periodEnd='20
         response_content = perform_get_request(url, params)
 
         # Response content is a string of XML data
-        df = xml_to_load_dataframe(response_content, 'Load')
+        df = xml_to_load_dataframe(response_content)
 
         # Save the DataFrame to a CSV file
         df.to_csv(f'{output_path}/load_{region}.csv', index=False)
@@ -123,4 +123,4 @@ def main(start_time, end_time, output_path):
 
 if __name__ == "__main__":
     args = parse_arguments()
-    main(args.start_time, args.end_time, args.output_path)
+    main(args.start_time, args.end_time, "C:/Users/ASUS/Desktop/infdev-schneider-hackathon/data")
