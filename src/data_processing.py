@@ -148,9 +148,20 @@ def preprocess_data(df): #
     # TODO: Generate new features, transform existing features, resampling, etc.
     df['StartTime'] = pd.to_datetime(df['StartTime'], format='%Y-%m-%dT%H:%M')
     aggregated_values = []
-    sum_col = ['Biomass', 'Geothermal', 'Hydro Pumped Storage', 'Hydro Run-of-river and poundage',
-                'Hydro Water Reservoir', 'Maring', 'Solar', 'Wind Offshore', 'Wind Onshore']
     
+    column_mapping = {
+        0: 'Surplus_SP',
+        1: 'Surplus_UK',
+        2: 'Surplus_DE',
+        3: 'Surplus_DK',
+        4: 'Surplus_HU',
+        5: 'Surplus_SE',
+        6: 'Surplus_IT',
+        7: 'Surplus_PO',
+        8: 'Surplus_NL',
+        # Add more mappings as needed
+    }
+
     for timestamp in df['StartTime'].unique():
         # Filter rows for the current timestamp
         timestamp_data = df[df['StartTime'] == timestamp]
@@ -160,11 +171,17 @@ def preprocess_data(df): #
         
         # Sum up the result for each country
         total_sum = result.groupby(timestamp_data['Country IDs']).sum().to_dict()
+
+        # Map column numbers to names
+        total_sum = {column_mapping[key]: value for key, value in total_sum.items()}
+
         # Append the results to the list
         aggregated_values.append({'StartTime': timestamp, **total_sum})
 
     # Convert the list of dictionaries to a DataFrame
     df_processed = pd.DataFrame(aggregated_values).set_index('StartTime').fillna(0)
+    df_processed = df_processed.reindex(sorted(df_processed.columns), axis=1)
+
 
     return df_processed
 
