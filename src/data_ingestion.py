@@ -123,4 +123,4 @@ def main(start_time, end_time, output_path):
 
 if __name__ == "__main__":
     args = parse_arguments()
-    main(args.start_time, args.end_time, "C:/Users/ASUS/Desktop/infdev-schneider-hackathon/data")
+    main(args.start_time, args.end_time, args.output_path)
