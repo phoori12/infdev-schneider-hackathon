@@ -28,9 +28,33 @@ def load_data(file_path):
     
     return df
 
+# Functions for clean_data
+def missing_values(df, column_to_ignore):
+    df_cleaned = df.dropna(subset=df.columns.difference([column_to_ignore]))
+    return df_cleaned
+
+def duplicates(df):
+    df_cleaned = df.drop_duplicates()
+    return df_cleaned
+
+def remove_outliers_iqr(df, column_name, threshold=1.5):
+    Q1 = df[column_name].quantile(0.25)
+    Q3 = df[column_name].quantile(0.75)
+    IQR = Q3 - Q1
+
+    lower_bound = Q1 - threshold * IQR
+    upper_bound = Q3 + threshold * IQR
+
+    cleaned_df = df[(df[column_name] >= lower_bound) & (df[column_name] <= upper_bound)]
+
+    return cleaned_df
+
 def clean_data(df):
-    
-    
+    df_clean = missing_values(df, "Load")
+    df_clean = duplicates(df_clean)
+    df_clean = remove_outliers_iqr(df_clean, "quantity")
+
+    df_clean.to_csv('../data/df2.csv', index=False)
     return df_clean
 
 def preprocess_data(df):
@@ -67,4 +91,5 @@ def main(input_file, output_file):
 if __name__ == "__main__":
     args = parse_arguments()
     ## main(args.input_file, args.output_file)
-    load_data("/home/main/Hackathon/infdev-schneider-hackathon/data")
+    x = load_data()
+    clean_data(x)
