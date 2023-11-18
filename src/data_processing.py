@@ -22,7 +22,7 @@ def load_data(file_path):
     files = [os.path.join(file_path, file) for file in os.listdir(file_path)]
     df = pd.DataFrame()
     for f in files:
-        if not ((f.endswith('csv') and (not 'TEST' in f) and (not 'test' in f))):
+        if not ((f.endswith('csv') and (not 'test' in f))):
             continue
         df_placeholder = pd.read_csv(f)
         df_placeholder = df_placeholder.drop('EndTime', axis=1)
@@ -54,7 +54,7 @@ def load_data(file_path):
             (df.PsrType != 'B17') |
             (df.PsrType != 'B20')
             ]
-    df.to_csv('../data/TEST.csv', index=False)
+    df.to_csv('../data/test.csv', index=False)
     print(df)
 
     df2 = pd.DataFrame(
@@ -101,8 +101,8 @@ def load_data(file_path):
  
 
 # Functions for clean_data
-def missing_values(df, column_to_ignore):
-    df_cleaned = df.dropna(subset=df.columns.difference([column_to_ignore]))
+def missing_values(df):
+    df_cleaned = df.loc[df['Load'] != 0]
     return df_cleaned
 
 def duplicates(df):
@@ -122,17 +122,20 @@ def remove_outliers_iqr(df, column_name, threshold=1.5):
     return cleaned_df
 
 def clean_data(df):
-    df_clean = missing_values(df, "Load")
+    df_clean = missing_values(df)
     df_clean = duplicates(df_clean)
-    df_clean = remove_outliers_iqr(df_clean, "quantity")
+    for col in df.columns:
+        if col == 'Country IDs' or col == 'StartTime' or col == 'UnitName':
+            continue
+        df_clean = remove_outliers_iqr(df_clean, col)
 
-    df_clean.to_csv('../data/df2.csv', index=False)
+    df_clean.to_csv('../data/test_clean.csv', index=False)
     
     return df_clean
 
 def preprocess_data(df):
     # TODO: Generate new features, transform existing features, resampling, etc.
-
+    
     return df_processed
 
 def save_data(df, output_file):
@@ -164,5 +167,5 @@ def main(input_file, output_file):
 
 if __name__ == "__main__":
     args = parse_arguments()
-    load_data(os.path.join(os.path.split(os.getcwd())[0], 'data'))
+    clean_data(load_data(os.path.join(os.path.split(os.getcwd())[0], 'data')))
     
