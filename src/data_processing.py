@@ -1,17 +1,43 @@
 import argparse
 import pandas as pd 
 import os 
+import csv
 
+def delete_row(csv_file_path, column_name, value_to_delete):
+    # Read the CSV file and filter out rows with the specified value in the specified column
+    with open(csv_file_path, 'r') as file:
+        reader = csv.DictReader(file)
+        rows = [row for row in reader if row[column_name] != value_to_delete]
 
+    # Write the remaining rows back to the CSV file
+    with open(csv_file_path, 'w', newline='') as file:
+        fieldnames = reader.fieldnames
+        writer = csv.DictWriter(file, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(rows)
 
 def load_data(file_path):
     files = [os.path.join(file_path, file) for file in os.listdir(file_path)]
     df = pd.concat((pd.read_csv(f) for f in files if f.endswith('csv')), ignore_index=True).reset_index()
-    print(df)
+
+    df =  df[ (df.PsrType == 'B01')|
+              (df.PsrType == 'B09')|
+              (df.PsrType == 'B10')|
+              (df.PsrType == 'B11')|
+              (df.PsrType == 'B12')|
+              (df.PsrType == 'B13')|
+              (df.PsrType == 'B16')|
+              (df.PsrType == 'B18')|
+              (df.PsrType == 'B19')
+            ]
+    
+    df.to_csv('../data/TEST.csv', index=False)
+    
     return df
 
 def clean_data(df):
-
+    
+    
     return df_clean
 
 def preprocess_data(df):
@@ -48,5 +74,5 @@ def main(input_file, output_file):
 
 if __name__ == "__main__":
     args = parse_arguments()
-    load_data(os.path.join(os.path.split(os.getcwd())[0], 'data'))
+    clean_data(load_data(os.path.join(os.path.split(os.getcwd())[0], 'data')))
     
