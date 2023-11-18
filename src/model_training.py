@@ -1,12 +1,21 @@
 import pandas as pd
 import argparse
-
+import numpy as np
+import matplotlib.pyplot as plt
+from pmdarima import auto_arima
+from statsmodels.tsa.arima.model import ARIMA
+from sklearn.model_selection import train_test_split
 def load_data(file_path):
-    # TODO: Load processed data from CSV file
+    
     return df
 
 def split_data(df):
-    # TODO: Split data into training and validation sets (the test set is already provided in data/test_data.csv)
+
+    X_trainval, X_test, y_trainval, y_test = train_test_split(df, encoded_Target, test_size=0.2, random_state=42)
+    X_train, X_val, y_train, y_val = train_test_split(X_trainval, y_trainval, test_size=0.1, random_state=42)
+
+
+
     return X_train, X_val, y_train, y_val
 
 def train_model(X_train, y_train):

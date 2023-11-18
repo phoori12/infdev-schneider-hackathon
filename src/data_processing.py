@@ -1,121 +1,131 @@
 import argparse
 import pandas as pd 
 import os 
+import math
 import csv
+from dateutil import parser
 
-def getCoutryId(AreaID):
-    if AreaID == '10YES-REE------0':
-        return 0 # SP
-    elif AreaID == '10Y1001A1001A92E':
-        return 1 # UK
-    elif AreaID == '10Y1001A1001A83F':
-        return 2 # DE
-    elif AreaID == '10Y1001A1001A65H':
-        return 3 # DK
-    elif AreaID == '10YHU-MAVIR----U':
-        return 4 # HU
-    elif AreaID == '10YSE-1--------K':
-        return 5 # SE
-    elif AreaID == '10YIT-GRTN-----B':
-        return 6 # IT
-    elif AreaID == '10YPL-AREA-----S':
-        return 7 # PO
-    elif AreaID == '10YNL----------L':
-        return 8 # NL
+COUNTRY_ID_MAP = {
+    '10YES-REE------0': 0,  # SP
+    '10Y1001A1001A92E': 1,  # UK
+    '10Y1001A1001A83F': 2,  # DE
+    '10Y1001A1001A65H': 3,  # DK
+    '10YHU-MAVIR----U': 4,  # HU
+    '10YSE-1--------K': 5,  # SE
+    '10YIT-GRTN-----B': 6,  # IT
+    '10YPL-AREA-----S': 7,  # PO
+    '10YNL----------L': 8   # NL
+}
 
+    
 def load_data(file_path):
     files = [os.path.join(file_path, file) for file in os.listdir(file_path)]
-    df = pd.concat((pd.read_csv(f) for f in files if (f.endswith('csv') and "gen" in f)), ignore_index=True).reset_index()
+    df = pd.DataFrame()
+    for f in files:
+        if not ((f.endswith('csv') and (not 'TEST' in f))):
+            continue
+        df_placeholder = pd.read_csv(f)
+        df_placeholder = df_placeholder.drop('EndTime', axis=1)
+        df_placeholder['StartTime'] = df_placeholder['StartTime'].str.replace('+00:00Z', '')
 
-    df =  df[ (df.PsrType == 'B01')|
-              (df.PsrType == 'B09')|
-              (df.PsrType == 'B10')|
-              (df.PsrType == 'B11')|
-              (df.PsrType == 'B12')|
-              (df.PsrType == 'B13')|
-              (df.PsrType == 'B16')|
-              (df.PsrType == 'B18')|
-              (df.PsrType == 'B19')
+        # Convert columns to datetime using pd.to_datetime
+        df_placeholder['StartTime'] = pd.to_datetime(df_placeholder['StartTime'], format='%Y-%m-%dT%H:%M')
+        df_placeholder.set_index('StartTime', inplace=True)
+        agg_dict = {}
+        for col in df_placeholder.columns:
+            if  col == 'quantity' or col == 'Load':
+                agg_dict[col] = 'sum'
+            else:
+                agg_dict[col] = 'first'
+        df_placeholder = df_placeholder.resample('H').agg(agg_dict)
+        df_placeholder.reset_index(inplace=True)
+        df = pd.concat([df, df_placeholder], ignore_index=True)
+
+    df = df[(df.PsrType != 'B02') |
+            (df.PsrType != 'B03') |
+            (df.PsrType != 'B04') |
+            (df.PsrType != 'B05') |
+            (df.PsrType != 'B06') |
+            (df.PsrType != 'B07') |
+            (df.PsrType != 'B08') |
+            (df.PsrType != 'B14') |
+            (df.PsrType != 'B15') |
+            (df.PsrType != 'B17') |
+            (df.PsrType != 'B20')
             ]
-    
-    df2 = pd.DataFrame(columns=['Country IDs', 'StartTime', 'EndTime', 'UnitName', 'Biomass', 'Geothermal', 'Hydro Pumped Storage', 'Hydro Run-of-river and poundage', 'Hydro Water Reservoir', 'Maring', 'Solar', 'Wind Offshore', 'Wind Onshore'])
-    for row in df.itertuples():
-        Country_id = 0
-        Start_time = 0
-        End_time = 0
-        Unit_name = ""
-        Biomass = 0
-        Geothermal = 0
-        Hydro_pump = 0
-        Hydro_run = 0
-        Hydro_water = 0
-        Marine = 0
-        Solar = 0
-        Wind_off = 0
-        Wind_on = 0
-        Country_id = getCoutryId(row.AreaID)
-        Start_time = row.StartTime
-        End_time = row.EndTime
-        Unit_name = row.UnitName
-
-        df_lookup = df.loc[(df['AreaID'] == row.AreaID) & (df['StartTime'] == Start_time) & (df['EndTime'] == End_time)]
-        
-        for j_row in df_lookup.itertuples():
-            if j_row.PsrType == 'B01':
-                Biomass = j_row.quantity
-            elif j_row.PsrType == 'B09':
-                Geothermal = j_row.quantity
-            elif j_row.PsrType == 'B10':
-                Hydro_pump = j_row.quantity
-            elif j_row.PsrType == 'B11':
-                Hydro_run = j_row.quantity
-            elif j_row.PsrType == 'B12':
-                Hydro_water = j_row.quantity
-            elif j_row.PsrType == 'B13':
-                Marine = j_row.quantity
-            elif j_row.PsrType == 'B16':
-                Solar = j_row.quantity
-            elif j_row.PsrType == 'B18':
-                Wind_off = j_row.quantity
-            elif j_row.PsrType == 'B19':
-                Wind_on = j_row.quantity
-
-        
-        df2 = pd.concat([df2, pd.DataFrame([Country_id, 
-                    Start_time,
-                    End_time,
-                    Unit_name,
-                    Biomass,
-                    Geothermal,
-                    Hydro_pump,
-                    Hydro_run,
-                    Hydro_water,
-                    Marine,
-                    Solar,
-                    Wind_off,
-                    Wind_on])], ignore_index=True)
-        print(([Country_id, 
-                        Start_time,
-                        End_time,
-                        Unit_name,
-                        Biomass,
-                        Geothermal,
-                        Hydro_pump,
-                        Hydro_run,
-                        Hydro_water,
-                        Marine,
-                        Solar,
-                        Wind_off,
-                        Wind_on]))
+    df.to_csv('../data/TEST.csv', index=False)
 
 
-    df2.to_csv('../data/test.csv', index=False)
-    
+
+  
+    print(df)
+
+    df2 = pd.DataFrame(
+        columns=['Country IDs', 'StartTime', 'EndTime', 'UnitName', 'Biomass', 'Geothermal', 'Hydro Pumped Storage',
+                 'Hydro Run-of-river and poundage', 'Hydro Water Reservoir', 'Maring', 'Solar', 'Wind Offshore',
+                 'Wind Onshore', 'Load'])
+
+    # for _, group in df.groupby(['AreaID', 'StartTime', 'EndTime']):
+    #     country_id = COUNTRY_ID_MAP.get(group['AreaID'].iloc[0], 0)
+    #     start_time = group['StartTime'].iloc[0]
+    #     end_time = group['EndTime'].iloc[0]
+    #     unit_name = group['UnitName'].iloc[0]
+
+    #     quantities = dict(zip(group['PsrType'], group['quantity']))
+
+    #     biomass = quantities.get('B01', 0)
+    #     geothermal = quantities.get('B09', 0)
+    #     hydro_pump = quantities.get('B10', 0)
+    #     hydro_run = quantities.get('B11', 0)
+    #     hydro_water = quantities.get('B12', 0)
+    #     marine = quantities.get('B13', 0)
+    #     solar = quantities.get('B16', 0)
+    #     wind_off = quantities.get('B18', 0)
+    #     wind_on = quantities.get('B19', 0)
+
+    #     load = group['Load'].dropna().iloc[0] if 'Load' in group.columns else 0
+
+    #     df2 = pd.concat([df2, pd.DataFrame([[country_id, start_time, end_time, unit_name,
+    #                                          biomass, geothermal, hydro_pump, hydro_run, hydro_water,
+    #                                          marine, solar, wind_off, wind_on, load]])], ignore_index=True)
+
+    #     print([country_id, start_time, end_time, unit_name,
+    #            biomass, geothermal, hydro_pump, hydro_run, hydro_water,
+    #            marine, solar, wind_off, wind_on, load])
+
+    # df2.to_csv('../data/test_formatted.csv', index=False)
+
     return df2
+ 
+
+# Functions for clean_data
+def missing_values(df, column_to_ignore):
+    df_cleaned = df.dropna(subset=df.columns.difference([column_to_ignore]))
+    return df_cleaned
+
+def duplicates(df):
+    df_cleaned = df.drop_duplicates()
+    return df_cleaned
+
+def remove_outliers_iqr(df, column_name, threshold=1.5):
+    Q1 = df[column_name].quantile(0.25)
+    Q3 = df[column_name].quantile(0.75)
+    IQR = Q3 - Q1
+
+    lower_bound = Q1 - threshold * IQR
+    upper_bound = Q3 + threshold * IQR
+
+    cleaned_df = df[(df[column_name] >= lower_bound) & (df[column_name] <= upper_bound)]
+
+    return cleaned_df
 
 def clean_data(df):
+    df_clean = missing_values(df, "Load")
+    df_clean = duplicates(df_clean)
+    df_clean = remove_outliers_iqr(df_clean, "quantity")
 
-
+    df_clean.to_csv('../data/df2.csv', index=False)
+    
     return df_clean
 
 def preprocess_data(df):
