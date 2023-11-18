@@ -197,7 +197,6 @@ def preprocess_data(df): #
     #df_processed = df_processed[(df_processed != 0.0).all(axis=1)] # Remove rows with "0.0"
     df_processed = df_processed.reindex(sorted(df_processed.columns), axis=1)
 
-
     return df_processed
 
 def fill_Data(df):
@@ -287,5 +286,5 @@ if __name__ == "__main__":
     df = preprocess_data(df)
     df = fill_data(df)
     save_data(df, "idk")
-    
 
+    
