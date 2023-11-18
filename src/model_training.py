@@ -5,22 +5,33 @@ import matplotlib.pyplot as plt
 from pmdarima import auto_arima
 from statsmodels.tsa.arima.model import ARIMA
 from sklearn.model_selection import train_test_split
+from fpprophet import Prophet
+
 def load_data(file_path):
     
     return df
 
 def split_data(df):
 
-    X_trainval, X_test, y_trainval, y_test = train_test_split(df, encoded_Target, test_size=0.2, random_state=42)
-    X_train, X_val, y_train, y_val = train_test_split(X_trainval, y_trainval, test_size=0.1, random_state=42)
-
+    X_train, X_val, y_train, y_val = train_test_split(df, encoded_Target, test_size=0.2, random_state=42)
+  
 
 
     return X_train, X_val, y_train, y_val
 
 def train_model(X_train, y_train):
-    # TODO: Initialize your model and train it
-    return model
+    class LSTMClassifier(nn.Module):
+         def __init__(self, input_size, hidden_size, num_classes):
+            super(LSTMClassifier, self).__init__()
+            self.lstm = nn.LSTM(input_size, hidden_size, batch_first=True)
+            self.fc = nn.Linear(hidden_size, num_classes)
+
+         def forward(self, x):
+             out, _ = self.lstm(x)
+             out = self.fc(out[:, -1, :])  # Take the output from the last time step
+             return out
+
+return model
 
 def save_model(model, model_path):
     # TODO: Save your trained model
