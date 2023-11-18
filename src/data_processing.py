@@ -22,7 +22,7 @@ def load_data(file_path):
     files = [os.path.join(file_path, file) for file in os.listdir(file_path)]
     df = pd.DataFrame()
     for f in files:
-        if not ((f.endswith('csv') and (not 'TEST' in f))):
+        if not ((f.endswith('csv') and (not 'TEST' in f) and (not 'test' in f))):
             continue
         df_placeholder = pd.read_csv(f)
         df_placeholder = df_placeholder.drop('EndTime', axis=1)
@@ -61,6 +61,8 @@ def load_data(file_path):
         columns=['Country IDs', 'StartTime', 'UnitName', 'Biomass', 'Geothermal', 'Hydro Pumped Storage',
                  'Hydro Run-of-river and poundage', 'Hydro Water Reservoir', 'Maring', 'Solar', 'Wind Offshore',
                  'Wind Onshore', 'Load'])
+    
+    result_data = []
 
     for _, group in df.groupby(['AreaID', 'StartTime']):
         country_id = COUNTRY_ID_MAP.get(group['AreaID'].iloc[0], 0)
@@ -81,14 +83,17 @@ def load_data(file_path):
 
         load = group['Load'].dropna().iloc[0] if ('Load' in group.columns) and (not group['Load'].dropna().empty) else 0
 
-
-        df2 = pd.concat([df2, pd.DataFrame([[country_id, start_time, unit_name,
-                                             biomass, geothermal, hydro_pump, hydro_run, hydro_water,
-                                             marine, solar, wind_off, wind_on, load]])], ignore_index=True)
-
+        result_data.append([country_id, start_time, unit_name, biomass, geothermal, hydro_pump, hydro_run, hydro_water,
+                        marine, solar, wind_off, wind_on, load])
+        
         print([country_id, start_time, unit_name,
                biomass, geothermal, hydro_pump, hydro_run, hydro_water,
                marine, solar, wind_off, wind_on, load])
+        
+    df2 = pd.concat([pd.DataFrame(result_data, columns=['Country IDs', 'StartTime', 'UnitName', 'Biomass', 'Geothermal',
+                                                     'Hydro Pumped Storage', 'Hydro Run-of-river and poundage',
+                                                     'Hydro Water Reservoir', 'Maring', 'Solar', 'Wind Offshore',
+                                                     'Wind Onshore', 'Load'])], ignore_index=True)
 
     df2.to_csv('../data/test_formatted.csv', index=False)
 
