@@ -120,16 +120,29 @@ def remove_outliers_iqr(df, column_name, threshold=1.5):
     return cleaned_df
 
 def clean_data(df):
-    df_clean = missing_values(df)
-    df_clean = duplicates(df_clean)
-    for col in df.columns:
-        if col == 'Country IDs' or col == 'StartTime' or col == 'UnitName':
-            continue
-        df_clean = remove_outliers_iqr(df_clean, col)
+    df_cleaned = missing_values(df)
+    df_cleaned = duplicates(df_cleaned)
 
-   
-    
-    return df_clean
+    # List of unique Country IDs
+    unique_country_ids = df_cleaned['Country IDs'].unique()
+
+    cleaned_dfs = []
+
+    for country_id in unique_country_ids:
+        country_df = df_cleaned[df_cleaned['Country IDs'] == country_id]
+
+        # Apply remove_outliers_iqr for each relevant column (excluding 'Country IDs', 'StartTime', and 'UnitName')
+        for col in df_cleaned.columns:
+            if col == 'Country IDs' or col == 'StartTime' or col == 'UnitName':
+                continue
+            country_df = remove_outliers_iqr(country_df, col)
+
+        cleaned_dfs.append(country_df)
+
+    df_cleaned_final = pd.concat(cleaned_dfs, ignore_index=True)
+
+    return df_cleaned_final
+
 
 def preprocess_data(df): # 
     # TODO: Generate new features, transform existing features, resampling, etc.
