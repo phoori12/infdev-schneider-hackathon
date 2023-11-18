@@ -1,8 +1,6 @@
 import argparse
 import pandas as pd 
 import os 
-import math
-import csv
 from dateutil import parser
 
 COUNTRY_ID_MAP = {
@@ -129,18 +127,37 @@ def clean_data(df):
             continue
         df_clean = remove_outliers_iqr(df_clean, col)
 
-    df_clean.to_csv('../data/test_clean.csv', index=False)
+   
     
     return df_clean
 
-def preprocess_data(df):
+def preprocess_data(df): # 
     # TODO: Generate new features, transform existing features, resampling, etc.
+    df['StartTime'] = pd.to_datetime(df['StartTime'], format='%Y-%m-%dT%H:%M')
+    aggregated_values = []
+    sum_col = ['Biomass', 'Geothermal', 'Hydro Pumped Storage', 'Hydro Run-of-river and poundage',
+                'Hydro Water Reservoir', 'Maring', 'Solar', 'Wind Offshore', 'Wind Onshore']
     
+    for timestamp in df['StartTime'].unique():
+        # Filter rows for the current timestamp
+        timestamp_data = df[df['StartTime'] == timestamp]
+        
+        # Calculate the result for each country 
+        result = timestamp_data.iloc[:, 3:12].sum(axis=1) - timestamp_data['Load']
+        
+        # Sum up the result for each country
+        total_sum = result.groupby(timestamp_data['Country IDs']).sum().to_dict()
+        # Append the results to the list
+        aggregated_values.append({'StartTime': timestamp, **total_sum})
+
+    # Convert the list of dictionaries to a DataFrame
+    df_processed = pd.DataFrame(aggregated_values).set_index('StartTime').fillna(0)
+
     return df_processed
 
 def save_data(df, output_file):
     # TODO: Save processed data to a CSV file
-
+    df.to_csv('../data/test_final.csv', index=True)
     pass
 
 def parse_arguments():
@@ -167,5 +184,9 @@ def main(input_file, output_file):
 
 if __name__ == "__main__":
     args = parse_arguments()
-    clean_data(load_data(os.path.join(os.path.split(os.getcwd())[0], 'data')))
+    df = load_data(os.path.join(os.path.split(os.getcwd())[0], 'data'))
+    df = clean_data(df)
+    df = preprocess_data(df)
+    save_data(df, "idk")
+
     
