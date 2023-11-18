@@ -4,38 +4,27 @@ import glob
 import os 
 import csv
 
-def delete_row(csv_file_path, column_name, value_to_delete):
-    # Read the CSV file and filter out rows with the specified value in the specified column
-    with open(csv_file_path, 'r') as file:
-        reader = csv.DictReader(file)
-        rows = [row for row in reader if row[column_name] != value_to_delete]
 
-    # Write the remaining rows back to the CSV file
-    with open(csv_file_path, 'w', newline='') as file:
-        fieldnames = reader.fieldnames
-        writer = csv.DictWriter(file, fieldnames=fieldnames)
-        writer.writeheader()
-        writer.writerows(rows)
 
 def load_data(file_path):
 
     files = [os.path.join(file_path, file) for file in os.listdir(file_path)]
     df = pd.concat((pd.read_csv(f) for f in files if f.endswith('csv')), ignore_index=True).reset_index()
-
-    print(df.head())
-    df =  df[ (df.PsrType == 'B01')|
-              (df.PsrType == 'B09')|
-              (df.PsrType == 'B10')|
-              (df.PsrType == 'B11')|
-              (df.PsrType == 'B12')|
-              (df.PsrType == 'B13')|
-              (df.PsrType == 'B16')|
-              (df.PsrType == 'B18')|
-              (df.PsrType == 'B19')
+    
+    df =  df[ (df.PsrType !=  'B02')|
+              (df.PsrType !=  'B03')|
+              (df.PsrType !=  'B04')|
+              (df.PsrType !=  'B05')|
+              (df.PsrType !=  'B06')|
+              (df.PsrType !=  'B07')|
+              (df.PsrType !=  'B08')|
+              (df.PsrType !=  'B14')|
+              (df.PsrType !=  'B15')|
+              (df.PsrType !=  'B17')|
+              (df.PsrType !=  'B20')
             ]
-    
+    print(df.head())
     df.to_csv('../data/TEST.csv', index=False)
-    
     
     return df
 
