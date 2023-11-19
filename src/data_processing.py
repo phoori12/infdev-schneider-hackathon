@@ -249,7 +249,7 @@ def save_data(df, output_file):
     pass
 
 def fill_data(df):
-    for column_name in df.columns[:-1]:
+    for column_name in df.columns:
     # Iterate through each row
         for i in range(1, len(df)):
             if df.iloc[i][column_name] == 0:
