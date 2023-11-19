@@ -225,7 +225,15 @@ def fill_Data(df):
     return df        
        
 def find_max(df):
-    df['Surplus_Max'] = df.idxmax(axis=1)
+    # UK Problem with values between 0 and -1 
+    df_copy = df.copy()
+ 
+    df_copy[(df_copy >= -1) & (df_copy <= 0)] = np.nan
+    df['Surplus_Max'] = df_copy.idxmax(axis=1)
+    for column_name in df.columns[:-1]:
+        df.loc[(df[column_name] >= -1) & (df[column_name] <= 0), column_name] = 0
+
+
     column_mapping = {
          'Surplus_SP':0,
          'Surplus_UK':1,
