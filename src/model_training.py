@@ -21,7 +21,6 @@ from sklearn.preprocessing import MinMaxScaler
 #     return acc
 
 class ClassifierDataset(Dataset):
-
     def __init__(self, X_data, y_data):
         self.X_data = X_data
         self.y_data = y_data
@@ -36,40 +35,37 @@ class ClassifierDataset(Dataset):
 
 
 class MulticlassClassification(nn.Module):
-            def __init__(self, num_feature, num_class):
+    def __init__(self, num_feature, num_class):
+        super(MulticlassClassification, self).__init__()
 
-                super(MulticlassClassification, self).__init__()
+        self.layer_1 = nn.Linear(num_feature, 512)
+        self.layer_2 = nn.Linear(512, 128)
+        self.layer_3 = nn.Linear(128, 64)
+        self.layer_out = nn.Linear(64, num_class)
 
-                self.layer_1 = nn.Linear(num_feature, 512)
-                self.layer_2 = nn.Linear(512, 128)
-                self.layer_3 = nn.Linear(128, 64)
-                self.layer_out = nn.Linear(64, num_class)
+        self.relu = nn.ReLU()
+        self.dropout = nn.Dropout(p=0.2)
+        self.batchnorm1 = nn.BatchNorm1d(512)
+        self.batchnorm2 = nn.BatchNorm1d(128)
+        self.batchnorm3 = nn.BatchNorm1d(64)
 
-                self.relu = nn.ReLU()
-                self.dropout = nn.Dropout(p=0.2)
-                self.batchnorm1 = nn.BatchNorm1d(512)
-                self.batchnorm2 = nn.BatchNorm1d(128)
-                self.batchnorm3 = nn.BatchNorm1d(64)
+    def forward(self, x):
+        x = self.layer_1(x)
+        x = self.batchnorm1(x)
+        x = self.relu(x)
 
-            def forward(self, x):
-                x = self.layer_1(x)
-                x = self.batchnorm1(x)
-                x = self.relu(x)
+        x = self.layer_2(x)
+        x = self.batchnorm2(x)
+        x = self.relu(x)
+        x = self.dropout(x)
 
-                x = self.layer_2(x)
-                x = self.batchnorm2(x)
-                x = self.relu(x)
-                x = self.dropout(x)
+        x = self.layer_3(x)
+        x = self.batchnorm3(x)
+        x = self.relu(x)
+        x = self.dropout(x)
 
-                x = self.layer_3(x)
-                x = self.batchnorm3(x)
-                x = self.relu(x)
-                x = self.dropout(x)
-
-
-                x = self.layer_out(x)
-
-                return x
+        x = self.layer_out(x)
+        return x
 
 
 
@@ -91,83 +87,82 @@ def split_data(df):
     return X_train, X_val, y_train, y_val
 
 
-def train_model(X_train,y_train):
+def train_model(X_train,y_train, X_val, y_val):
+    BATCH_SIZE = 32
+    input_size =  9  # Number of features (excluding timestamp)
+    num_classes = 9  # Number of countries
+    num_epochs = 150
 
-        BATCH_SIZE = 32
-        input_size =  9  # Number of features (excluding timestamp)
-        num_classes = 9  # Number of countries
-        num_epochs = 150
+    accuracy_stats = {
+        'train': [],
+        "val": []
+    }
+    loss_stats = {
+        'train': [],
+        "val": []
+    }         
 
-        accuracy_stats = {
-            'train': [],
-            "val": []
-        }
-        loss_stats = {
-            'train': [],
-            "val": []
-        }         
-
-        train_dataset = ClassifierDataset(torch.from_numpy(X_train).float(), torch.from_numpy(y_train).long())
-        # test_dataset = ClassifierDataset(torch.from_numpy(X_val).float(), torch.from_numpy(y_val).long())
-        
-        train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE)
-        test_loader = DataLoader(test_dataset, batch_size=1)
-                 
-        model = MulticlassClassification(input_size , num_classes)
-        criterion = nn.CrossEntropyLoss()
-        optimizer = torch.optim.Adam(model.parameters(), lr=0.002)
-        
-
-        
-        print("Begin training.")
-        for e in range(num_epochs):
-        # TRAINING
-
-            train_epoch_loss = 0
-            train_epoch_acc = 0
-            model.train()
-
-            for X_train_batch, y_train_batch in train_loader:
+    train_dataset = ClassifierDataset(torch.from_numpy(X_train).float(), torch.from_numpy(y_train).long())
+    test_dataset = ClassifierDataset(torch.from_numpy(X_val).float(), torch.from_numpy(y_val).long())
+    
+    train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE)
+    test_loader = DataLoader(test_dataset, batch_size=1)
                 
-                optimizer.zero_grad()
+    model = MulticlassClassification(input_size , num_classes)
+    criterion = nn.CrossEntropyLoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.002)
+    
 
-                y_train_pred = model(X_train_batch)
+    
+    print("Begin training.")
+    for e in range(num_epochs):
+    # TRAINING
 
-                train_loss = criterion(y_train_pred, y_train_batch)
-                train_acc = multi_acc(y_train_pred, y_train_batch)
+        train_epoch_loss = 0
+        train_epoch_acc = 0
+        model.train()
 
-                train_loss.backward()
-                optimizer.step()
+        for X_train_batch, y_train_batch in train_loader:
+            
+            optimizer.zero_grad()
 
-                train_epoch_loss += train_loss.item()
-                train_epoch_acc += train_acc.item()
+            y_train_pred = model(X_train_batch)
 
-        # # VALIDATION
-        #     with torch.no_grad():
+            train_loss = criterion(y_train_pred, y_train_batch)
+            train_acc = multi_acc(y_train_pred, y_train_batch)
 
-        #         val_epoch_loss = 0
-        #         val_epoch_acc = 0
+            train_loss.backward()
+            optimizer.step()
 
-        #         model.eval()
-        #         for X_val_batch, y_val_batch in test_loader:
-                   
+            train_epoch_loss += train_loss.item()
+            train_epoch_acc += train_acc.item()
 
-        #             y_val_pred = model(X_val_batch)
+    # # VALIDATION
+    #     with torch.no_grad():
 
-        #             val_loss = criterion(y_val_pred, y_val_batch)
-        #             val_acc = multi_acc(y_val_pred, y_val_batch)
+    #         val_epoch_loss = 0
+    #         val_epoch_acc = 0
 
-        #             val_epoch_loss += val_loss.item()
-        #             val_epoch_acc += val_acc.item()
+    #         model.eval()
+    #         for X_val_batch, y_val_batch in test_loader:
+                
 
-        #     loss_stats['train'].append(train_epoch_loss/len(train_loader))
-        #     loss_stats['val'].append(val_epoch_loss/len(test_loader))
-        #     accuracy_stats['train'].append(train_epoch_acc/len(train_loader))
-        #     accuracy_stats['val'].append(val_epoch_acc/len(test_loader))
+    #             y_val_pred = model(X_val_batch)
 
-            print(f'Epoch {e+0:03}: | Train Loss: {train_epoch_loss/len(train_loader):.5f} | Val Loss: {val_epoch_loss/len(test_loader):.5f} | Train Acc: {train_epoch_acc/len(train_loader):.3f}| Val Acc: {val_epoch_acc/len(test_loader):.3f}')
-                    
-        return model
+    #             val_loss = criterion(y_val_pred, y_val_batch)
+    #             val_acc = multi_acc(y_val_pred, y_val_batch)
+
+    #             val_epoch_loss += val_loss.item()
+    #             val_epoch_acc += val_acc.item()
+
+    #     loss_stats['train'].append(train_epoch_loss/len(train_loader))
+    #     loss_stats['val'].append(val_epoch_loss/len(test_loader))
+    #     accuracy_stats['train'].append(train_epoch_acc/len(train_loader))
+    #     accuracy_stats['val'].append(val_epoch_acc/len(test_loader))
+
+        print(f'Epoch {e+0:03}: | Train Loss: {train_epoch_loss/len(train_loader):.5f} | Val Loss: {val_epoch_loss/len(test_loader):.5f} | Train Acc: {train_epoch_acc/len(train_loader):.3f}| Val Acc: {val_epoch_acc/len(test_loader):.3f}')
+                
+    return model
 
 def save_model(model, model_path):
     torch.save(model.state_dict(), model_path)
@@ -191,7 +186,12 @@ def parse_arguments():
 
 def main(input_file, model_file):
 
-    df = load_data("/home/main/Hackathon/infdev-schneider-hackathon/data/test_final.csv")
+    df = load_data("../data/test_final.csv")
+    
     X_train, X_val, y_train, y_val = split_data(df) 
-    model = train_model(X_train, y_train)
+    model = train_model(X_train, y_train, X_val, y_val)
     save_model(model, model_file)
+
+if __name__ == "__main__":
+    args = parse_arguments()
+    main(args.input_file, args.model_file)
