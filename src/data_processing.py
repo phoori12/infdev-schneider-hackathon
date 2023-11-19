@@ -229,7 +229,7 @@ def find_max(df):
     df_copy = df.copy()
  
     df_copy[(df_copy >= -1) & (df_copy <= 0)] = np.nan
-    df['Surplus_Max'] = df_copy.idxmax(axis=1)
+    df['Predicted_Surplus_Max'] = df_copy.idxmax(axis=1)
     for column_name in df.columns[:-1]:
         df.loc[(df[column_name] >= -1) & (df[column_name] <= 0), column_name] = 0
 
@@ -246,8 +246,8 @@ def find_max(df):
          'Surplus_NL':8,
         # Add more mappings as needed
     }
-    df['Surplus_Max'] = df['Surplus_Max'].map(column_mapping)
-    df['Surplus_Max'] = df['Surplus_Max'].shift(-1)
+    df['Predicted_Surplus_Max'] = df['Predicted_Surplus_Max'].map(column_mapping)
+    df['Predicted_Surplus_Max'] = df['Predicted_Surplus_Max'].shift(-1)
     df = df.iloc[1:-1]
     return df
 

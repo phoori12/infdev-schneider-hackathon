@@ -4,25 +4,21 @@ import numpy as np
 import torch
 import matplotlib.pyplot as plt
 import torch.nn as nn
+import torch.optim as optim
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Dataset
 from sklearn.preprocessing import MinMaxScaler
 
-BATCH_SIZE = 32
-input_size =  9  # Number of features (excluding timestamp)
-hidden_size = 50
-num_classes = 9  # Number of countries
-num_epochs = 300
-class LSTMClassifier(nn.Module):
-        def __init__(self, input_size, hidden_size, num_classes):
-            super(LSTMClassifier, self).__init__()
-            self.lstm = nn.LSTM(input_size, hidden_size, batch_first=True)
-            self.fc = nn.Linear(hidden_size, num_classes)
+# def multi_acc(y_pred, y_test):
+#     y_pred_softmax = torch.log_softmax(y_pred, dim = 1)
+#     _, y_pred_tags = torch.max(y_pred_softmax, dim = 1)
 
-        def forward(self, x):
-            output, _ = self.lstm(x)
-            output = self.fc(output[:, -1, :])  # Take the output from the last time step
-            return output
+#     correct_pred = (y_pred_tags == y_test).float()
+#     acc = correct_pred.sum() / len(correct_pred)
+
+#     acc = torch.round(acc * 100)
+
+#     return acc
 
 class ClassifierDataset(Dataset):
 
@@ -37,6 +33,47 @@ class ClassifierDataset(Dataset):
         return len(self.X_data)
 
 
+
+
+class MulticlassClassification(nn.Module):
+            def __init__(self, num_feature, num_class):
+
+                super(MulticlassClassification, self).__init__()
+
+                self.layer_1 = nn.Linear(num_feature, 512)
+                self.layer_2 = nn.Linear(512, 128)
+                self.layer_3 = nn.Linear(128, 64)
+                self.layer_out = nn.Linear(64, num_class)
+
+                self.relu = nn.ReLU()
+                self.dropout = nn.Dropout(p=0.2)
+                self.batchnorm1 = nn.BatchNorm1d(512)
+                self.batchnorm2 = nn.BatchNorm1d(128)
+                self.batchnorm3 = nn.BatchNorm1d(64)
+
+            def forward(self, x):
+                x = self.layer_1(x)
+                x = self.batchnorm1(x)
+                x = self.relu(x)
+
+                x = self.layer_2(x)
+                x = self.batchnorm2(x)
+                x = self.relu(x)
+                x = self.dropout(x)
+
+                x = self.layer_3(x)
+                x = self.batchnorm3(x)
+                x = self.relu(x)
+                x = self.dropout(x)
+
+
+                x = self.layer_out(x)
+
+                return x
+
+
+
+
 def load_data(file_path):
     df = pd.read_csv(file_path)
     return df
@@ -46,48 +83,90 @@ def split_data(df):
     train = df.iloc[:, 1:-1]
     train_scaled = scaler.fit_transform(train)
     target = df.iloc[:, -1]
+    
     X_train, X_val, y_train, y_val = train_test_split(train, target, test_size=0.2, random_state=42)
     X_train, y_train = np.array(X_train), np.array(y_train)
     X_val, y_val = np.array(X_val), np.array(y_val)
 
     return X_train, X_val, y_train, y_val
 
-def train_model(X_train, y_train):
-        # df['StartTime'] = pd.to_datetime(df['StartTime'])
+
+def train_model(X_train,y_train):
+
+        BATCH_SIZE = 32
+        input_size =  9  # Number of features (excluding timestamp)
+        num_classes = 9  # Number of countries
+        num_epochs = 150
+
+        accuracy_stats = {
+            'train': [],
+            "val": []
+        }
+        loss_stats = {
+            'train': [],
+            "val": []
+        }         
+
         train_dataset = ClassifierDataset(torch.from_numpy(X_train).float(), torch.from_numpy(y_train).long())
-        model = LSTMClassifier(input_size ,  hidden_size, num_classes)
-        train_loader = DataLoader(train_dataset,
-                          batch_size=BATCH_SIZE)
+        # test_dataset = ClassifierDataset(torch.from_numpy(X_val).float(), torch.from_numpy(y_val).long())
+        
+        train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE)
+        test_loader = DataLoader(test_dataset, batch_size=1)
+                 
+        model = MulticlassClassification(input_size , num_classes)
         criterion = nn.CrossEntropyLoss()
         optimizer = torch.optim.Adam(model.parameters(), lr=0.002)
+        
 
+        
+        print("Begin training.")
+        for e in range(num_epochs):
+        # TRAINING
 
-        for epoch in range(num_epochs):
+            train_epoch_loss = 0
+            train_epoch_acc = 0
             model.train()
-            for inputs, labels in train_loader:
+
+            for X_train_batch, y_train_batch in train_loader:
+                
                 optimizer.zero_grad()
-                outputs = model(inputs)
-                loss = criterion(outputs, labels)
-                loss.backward()
+
+                y_train_pred = model(X_train_batch)
+
+                train_loss = criterion(y_train_pred, y_train_batch)
+                train_acc = multi_acc(y_train_pred, y_train_batch)
+
+                train_loss.backward()
                 optimizer.step()
 
-            print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
+                train_epoch_loss += train_loss.item()
+                train_epoch_acc += train_acc.item()
 
-        model.eval()
-        with torch.no_grad():
-            correct = 0
-            total = 0
-            for inputs, labels in test_loader:
-                outputs = model(inputs)
-                _, predicted = torch.max(outputs.data, 1)
-                total += labels.size(0)
-                correct += (predicted == labels).sum().item()
+        # # VALIDATION
+        #     with torch.no_grad():
 
-            accuracy = correct / total
-            print(f'Test Accuracy: {accuracy:.2%}')
+        #         val_epoch_loss = 0
+        #         val_epoch_acc = 0
 
+        #         model.eval()
+        #         for X_val_batch, y_val_batch in test_loader:
+                   
 
-            
+        #             y_val_pred = model(X_val_batch)
+
+        #             val_loss = criterion(y_val_pred, y_val_batch)
+        #             val_acc = multi_acc(y_val_pred, y_val_batch)
+
+        #             val_epoch_loss += val_loss.item()
+        #             val_epoch_acc += val_acc.item()
+
+        #     loss_stats['train'].append(train_epoch_loss/len(train_loader))
+        #     loss_stats['val'].append(val_epoch_loss/len(test_loader))
+        #     accuracy_stats['train'].append(train_epoch_acc/len(train_loader))
+        #     accuracy_stats['val'].append(val_epoch_acc/len(test_loader))
+
+            print(f'Epoch {e+0:03}: | Train Loss: {train_epoch_loss/len(train_loader):.5f} | Val Loss: {val_epoch_loss/len(test_loader):.5f} | Train Acc: {train_epoch_acc/len(train_loader):.3f}| Val Acc: {val_epoch_acc/len(test_loader):.3f}')
+                    
         return model
 
 def save_model(model, model_path):
@@ -111,11 +190,8 @@ def parse_arguments():
     return parser.parse_args()
 
 def main(input_file, model_file):
+
     df = load_data("/home/main/Hackathon/infdev-schneider-hackathon/data/test_final.csv")
-    X_train, X_val, y_train, y_val = split_data(df)    
+    X_train, X_val, y_train, y_val = split_data(df) 
     model = train_model(X_train, y_train)
     save_model(model, model_file)
-
-if __name__ == "__main__":
-    args = parse_arguments()
-    main(args.input_file, args.model_file)

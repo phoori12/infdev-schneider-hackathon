@@ -1,4 +1,4 @@
-StartTime,Surplus_DE,Surplus_DK,Surplus_HU,Surplus_IT,Surplus_NL,Surplus_PO,Surplus_SE,Surplus_SP,Surplus_UK,Surplus_Max
+StartTime,Surplus_DE,Surplus_DK,Surplus_HU,Surplus_IT,Surplus_NL,Surplus_PO,Surplus_SE,Surplus_SP,Surplus_UK,Predicted_Surplus_Max
 2022-06-01 00:00:00,-121800.0,-2266.0,-15608.0,-18107.0,-38845.0,-14273.5,-3032.0,-36842.0,-1215.0,1.0
 2022-06-01 01:00:00,-115665.0,-2233.0,-15457.0,-18649.0,-38217.0,-14363.25,-3255.0,-55263.0,-1201.0,1.0
 2022-06-01 02:00:00,-122566.0,-2344.0,-15727.0,-19095.0,-38299.0,-14453.0,-3330.0,-64473.5,-1176.0,1.0
