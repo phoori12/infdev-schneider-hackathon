@@ -71,9 +71,6 @@ class MulticlassClassification(nn.Module):
 
                 return x
 
-
-
-
 def load_data(file_path):
     df = pd.read_csv(file_path)
     return df
@@ -83,7 +80,8 @@ def split_data(df):
     train = df.iloc[:, 1:-1]
     train_scaled = scaler.fit_transform(train)
     target = df.iloc[:, -1]
-    
+    # print(target)
+    # print(train)
     X_train, X_val, y_train, y_val = train_test_split(train, target, test_size=0.2, random_state=42)
     X_train, y_train = np.array(X_train), np.array(y_train)
     X_val, y_val = np.array(X_val), np.array(y_val)
@@ -117,7 +115,8 @@ def train_model(X_train,y_train,X_val,y_val):
         criterion = nn.CrossEntropyLoss()
         optimizer = torch.optim.Adam(model.parameters(), lr=0.002)
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        print("Begin training.")
+        model.to(device)
+        print("Start training.")
         for e in (range(1, num_epochs+1)):
             # TRAINING
             train_epoch_loss = 0
@@ -156,18 +155,26 @@ def train_model(X_train,y_train,X_val,y_val):
 
                     val_epoch_loss += val_loss.item()
                     val_epoch_acc += val_acc.item()
+
             loss_stats['train'].append(train_epoch_loss/len(train_loader))
             loss_stats['val'].append(val_epoch_loss/len(test_loader))
             accuracy_stats['train'].append(train_epoch_acc/len(train_loader))
             accuracy_stats['val'].append(val_epoch_acc/len(test_loader))
 
-
-            print(f'Epoch {e+0:03}: | Train Loss: {train_epoch_loss/len(train_loader):.5f} | Val Loss: {val_epoch_loss/len(test_loader):.5f} | Train Acc: {train_epoch_acc/len(train_loader):.3f}| Val Acc: {val_epoch_acc/len(test_loader):.3f}')
-                  
+            print(f'Epoch {e+0:03}: | Train Loss: {train_epoch_loss/len(train_loader):.5f} | Test Loss: {val_epoch_loss/len(test_loader):.5f} | Train Acc: {train_epoch_acc/len(train_loader):.3f}| Test Acc: {val_epoch_acc/len(test_loader):.3f}')
+            
+        
         return model
 
 def save_model(model, model_path):
+    best_model_state = model.state_dict()
+    # model_scripted = torch.jit.script(best_model_state)
+    # torch.jit.save(best_model_state, model_path)
+    
     torch.save(model.state_dict(), model_path)
+    loaded_model = model
+    loaded_model.load_state_dict(torch.load(model_path))
+    loaded_model.eval()
     pass
 
 def parse_arguments():
@@ -191,8 +198,7 @@ def main(input_file, model_file):
     X_train, X_val, y_train, y_val = split_data(df) 
     model = train_model(X_train,y_train,X_val,y_val)
     
-    
-    # save_model(model, model_file)
+    save_model(model,"/home/main/Hackathon/infdev-schneider-hackathon/models/model.pt")
 
 if __name__ == "__main__":
     args = parse_arguments()
