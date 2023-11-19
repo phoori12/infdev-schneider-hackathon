@@ -49,7 +49,6 @@ def load_data(file_path):
             (df.PsrType != 'B07') |
             (df.PsrType != 'B08') |
             (df.PsrType != 'B14') |
-            (df.PsrType != 'B15') |
             (df.PsrType != 'B17') |
             (df.PsrType != 'B20')
             ]
@@ -58,7 +57,7 @@ def load_data(file_path):
 
     df2 = pd.DataFrame(
         columns=['Country IDs', 'StartTime', 'UnitName', 'Biomass', 'Geothermal', 'Hydro Pumped Storage',
-                 'Hydro Run-of-river and poundage', 'Hydro Water Reservoir', 'Maring', 'Solar', 'Wind Offshore',
+                 'Hydro Run-of-river and poundage', 'Hydro Water Reservoir', 'Marine', 'Other Renewable', 'Solar', 'Wind Offshore',
                  'Wind Onshore', 'Load'])
     
     result_data = []
@@ -76,6 +75,7 @@ def load_data(file_path):
         hydro_run = quantities.get('B11', 0)
         hydro_water = quantities.get('B12', 0)
         marine = quantities.get('B13', 0)
+        other_renew = quantities.get('B15',0)
         solar = quantities.get('B16', 0)
         wind_off = quantities.get('B18', 0)
         wind_on = quantities.get('B19', 0)
@@ -83,15 +83,15 @@ def load_data(file_path):
         load = group['Load'].dropna().iloc[0] if ('Load' in group.columns) and (not group['Load'].dropna().empty) else 0
 
         result_data.append([country_id, start_time, unit_name, biomass, geothermal, hydro_pump, hydro_run, hydro_water,
-                        marine, solar, wind_off, wind_on, load])
+                        marine,other_renew,solar, wind_off, wind_on, load])
         
         print([country_id, start_time, unit_name,
                biomass, geothermal, hydro_pump, hydro_run, hydro_water,
-               marine, solar, wind_off, wind_on, load])
+               marine, other_renew, solar, wind_off, wind_on, load])
         
     df2 = pd.concat([pd.DataFrame(result_data, columns=['Country IDs', 'StartTime', 'UnitName', 'Biomass', 'Geothermal',
                                                      'Hydro Pumped Storage', 'Hydro Run-of-river and poundage',
-                                                     'Hydro Water Reservoir', 'Maring', 'Solar', 'Wind Offshore',
+                                                     'Hydro Water Reservoir', 'Marine','Other Renewable', 'Solar', 'Wind Offshore',
                                                      'Wind Onshore', 'Load'])], ignore_index=True)
 
     df2.to_csv('../data/test_formatted.csv', index=False)
@@ -177,7 +177,7 @@ def preprocess_data(df): #
         timestamp_data = df[df['StartTime'] == timestamp]
 
         # Calculate the result for each country
-        result = timestamp_data.iloc[:, 3:12].sum(axis=1) - timestamp_data['Load']
+        result = timestamp_data.iloc[:, 3:13].sum(axis=1) - timestamp_data['Load']
 
         # Sum up the result for each country
         total_sum = result.groupby(timestamp_data['Country IDs']).sum().to_dict()
