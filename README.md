@@ -34,7 +34,7 @@ We have splitted our workflows into 3 sections:
 * [Model Training] (#model-training)
 * [Model Prediction and Re-Evaluation] (#model-prediction-and-re-evaluation)
 
-### Data Ingestion and Data Processing
+### Data Ingestion and Data Processing <a name="data-ingestion-and-data-processing"></a>
 
 * Data Ingestion
 
@@ -91,8 +91,8 @@ The Data Cleaning Consists of 3 Process:
     - On worst case, like the data we got from the uk, in which many values are missing and cannot be interpolated at all. We decided to set the values to 0.
     - In the `find_max` method, where we implement the function to find the maximum country with the energy surplus, we have to also add an extra condition that if a country has 0 surplus, we will ignore that country.
 
-### Model Training
+### Model Training <a name="model-training"></a>
 
-### Model Prediction and Re-Evaluation
+### Model Prediction and Re-Evaluation <a name="model-prediction-and-re-evaluation"></a>
 
 
