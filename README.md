@@ -30,9 +30,9 @@ Our goal is to create a model capable of predicting the country (from a list of 
 
 We have splitted our workflows into 3 sections:
 
-* [Data Ingestion and Data Processing] (#data-ingestion-and-data-processing)
-* [Model Training] (#model-training)
-* [Model Prediction and Re-Evaluation] (#model-prediction-and-re-evaluation)
+* [Data Ingestion and Data Processing](#data-ingestion-and-data-processing)
+* [Model Training](#model-training)
+* [Model Prediction and Re-Evaluation](#model-prediction-and-re-evaluation)
 
 ### Data Ingestion and Data Processing <a name="data-ingestion-and-data-processing"></a>
 
