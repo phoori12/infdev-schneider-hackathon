@@ -9,16 +9,16 @@ from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Dataset
 from sklearn.preprocessing import MinMaxScaler
 
-# def multi_acc(y_pred, y_test):
-#     y_pred_softmax = torch.log_softmax(y_pred, dim = 1)
-#     _, y_pred_tags = torch.max(y_pred_softmax, dim = 1)
+def multi_acc(y_pred, y_test):
+    y_pred_softmax = torch.log_softmax(y_pred, dim = 1)
+    _, y_pred_tags = torch.max(y_pred_softmax, dim = 1)
 
-#     correct_pred = (y_pred_tags == y_test).float()
-#     acc = correct_pred.sum() / len(correct_pred)
+    correct_pred = (y_pred_tags == y_test).float()
+    acc = correct_pred.sum() / len(correct_pred)
 
-#     acc = torch.round(acc * 100)
+    acc = torch.round(acc * 100)
 
-#     return acc
+    return acc
 
 class ClassifierDataset(Dataset):
 
@@ -91,7 +91,7 @@ def split_data(df):
     return X_train, X_val, y_train, y_val
 
 
-def train_model(X_train,y_train):
+def train_model(X_train,y_train,X_val,y_val):
 
         BATCH_SIZE = 32
         input_size =  9  # Number of features (excluding timestamp)
@@ -108,27 +108,23 @@ def train_model(X_train,y_train):
         }         
 
         train_dataset = ClassifierDataset(torch.from_numpy(X_train).float(), torch.from_numpy(y_train).long())
-        # test_dataset = ClassifierDataset(torch.from_numpy(X_val).float(), torch.from_numpy(y_val).long())
+        test_dataset = ClassifierDataset(torch.from_numpy(X_val).float(), torch.from_numpy(y_val).long())
         
         train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE)
-        test_loader = DataLoader(test_dataset, batch_size=1)
+        test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE)
                  
-        model = MulticlassClassification(input_size , num_classes)
+        model = MulticlassClassification(input_size ,num_classes)
         criterion = nn.CrossEntropyLoss()
         optimizer = torch.optim.Adam(model.parameters(), lr=0.002)
-        
-
-        
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         print("Begin training.")
-        for e in range(num_epochs):
-        # TRAINING
-
+        for e in (range(1, num_epochs+1)):
+            # TRAINING
             train_epoch_loss = 0
             train_epoch_acc = 0
             model.train()
-
             for X_train_batch, y_train_batch in train_loader:
-                
+                X_train_batch, y_train_batch = X_train_batch.to(device), y_train_batch.to(device)
                 optimizer.zero_grad()
 
                 y_train_pred = model(X_train_batch)
@@ -142,31 +138,32 @@ def train_model(X_train,y_train):
                 train_epoch_loss += train_loss.item()
                 train_epoch_acc += train_acc.item()
 
-        # # VALIDATION
-        #     with torch.no_grad():
 
-        #         val_epoch_loss = 0
-        #         val_epoch_acc = 0
+            # VALIDATION
+            with torch.no_grad():
 
-        #         model.eval()
-        #         for X_val_batch, y_val_batch in test_loader:
-                   
+                val_epoch_loss = 0
+                val_epoch_acc = 0
 
-        #             y_val_pred = model(X_val_batch)
+                model.eval()
+                for X_val_batch, y_val_batch in test_loader:
+                    X_val_batch, y_val_batch = X_val_batch.to(device), y_val_batch.to(device)
 
-        #             val_loss = criterion(y_val_pred, y_val_batch)
-        #             val_acc = multi_acc(y_val_pred, y_val_batch)
+                    y_val_pred = model(X_val_batch)
 
-        #             val_epoch_loss += val_loss.item()
-        #             val_epoch_acc += val_acc.item()
+                    val_loss = criterion(y_val_pred, y_val_batch)
+                    val_acc = multi_acc(y_val_pred, y_val_batch)
 
-        #     loss_stats['train'].append(train_epoch_loss/len(train_loader))
-        #     loss_stats['val'].append(val_epoch_loss/len(test_loader))
-        #     accuracy_stats['train'].append(train_epoch_acc/len(train_loader))
-        #     accuracy_stats['val'].append(val_epoch_acc/len(test_loader))
+                    val_epoch_loss += val_loss.item()
+                    val_epoch_acc += val_acc.item()
+            loss_stats['train'].append(train_epoch_loss/len(train_loader))
+            loss_stats['val'].append(val_epoch_loss/len(test_loader))
+            accuracy_stats['train'].append(train_epoch_acc/len(train_loader))
+            accuracy_stats['val'].append(val_epoch_acc/len(test_loader))
+
 
             print(f'Epoch {e+0:03}: | Train Loss: {train_epoch_loss/len(train_loader):.5f} | Val Loss: {val_epoch_loss/len(test_loader):.5f} | Train Acc: {train_epoch_acc/len(train_loader):.3f}| Val Acc: {val_epoch_acc/len(test_loader):.3f}')
-                    
+                  
         return model
 
 def save_model(model, model_path):
@@ -190,8 +187,13 @@ def parse_arguments():
     return parser.parse_args()
 
 def main(input_file, model_file):
-
     df = load_data("/home/main/Hackathon/infdev-schneider-hackathon/data/test_final.csv")
     X_train, X_val, y_train, y_val = split_data(df) 
-    model = train_model(X_train, y_train)
-    save_model(model, model_file)
+    model = train_model(X_train,y_train,X_val,y_val)
+    
+    
+    # save_model(model, model_file)
+
+if __name__ == "__main__":
+    args = parse_arguments()
+    main(args.input_file, args.model_file)
