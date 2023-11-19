@@ -206,12 +206,7 @@ def main(input_file, model_file):
     df = load_data("../data/test_final.csv")
     X_train, X_val, y_train, y_val = split_data(df) 
     model = train_model(X_train,y_train,X_val,y_val)
-<<<<<<< HEAD
-    
-    save_model(model,"/home/main/Hackathon/infdev-schneider-hackathon/models/model.pt")
-=======
     #save_model(model, '../models/model.pkl')
->>>>>>> 4090557cbc99bf0e807b1e3f118a8c165ce278c9
 
 if __name__ == "__main__":
     args = parse_arguments()
