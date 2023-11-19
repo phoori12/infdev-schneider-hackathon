@@ -53,7 +53,6 @@ def load_data(file_path):
             (df.PsrType != 'B20')
             ]
     df.to_csv('../data/test.csv', index=False)
-    print(df)
 
     df2 = pd.DataFrame(
         columns=['Country IDs', 'StartTime', 'UnitName', 'Biomass', 'Geothermal', 'Hydro Pumped Storage',
@@ -85,9 +84,10 @@ def load_data(file_path):
         result_data.append([country_id, start_time, unit_name, biomass, geothermal, hydro_pump, hydro_run, hydro_water,
                         marine,other_renew,solar, wind_off, wind_on, load])
         
-        print([country_id, start_time, unit_name,
-               biomass, geothermal, hydro_pump, hydro_run, hydro_water,
-               marine, other_renew, solar, wind_off, wind_on, load])
+        
+        # print([country_id, start_time, unit_name,
+        #        biomass, geothermal, hydro_pump, hydro_run, hydro_water,
+        #        marine, other_renew, solar, wind_off, wind_on, load])
         
     df2 = pd.concat([pd.DataFrame(result_data, columns=['Country IDs', 'StartTime', 'UnitName', 'Biomass', 'Geothermal',
                                                      'Hydro Pumped Storage', 'Hydro Run-of-river and poundage',
