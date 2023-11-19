@@ -30,9 +30,9 @@ Our goal is to create a model capable of predicting the country (from a list of 
 
 We have splitted our workflows into 3 sections:
 
-    * [Data Ingestion and Data Processing] (#data-ingestion-and-data-processing)
-    * [Model Training] (#model-training)
-    * [Model Prediction and Re-Evaluation] (#model-prediction-and-re-evaluation)
+* [Data Ingestion and Data Processing] (#data-ingestion-and-data-processing)
+* [Model Training] (#model-training)
+* [Model Prediction and Re-Evaluation] (#model-prediction-and-re-evaluation)
 
 ### Data Ingestion and Data Processing
 
@@ -76,7 +76,7 @@ We have splitted our workflows into 3 sections:
 The Data Cleaning Consists of 3 Process:
     - Removing missing values. All the missing values for each type of green energy were removed. Excluding the load.
     - Removing duplicate rows
-    - Removing outliers.
+    - Removing outliers
         - By using the IQR-Method (Interquartile Range). The reason behind this is, the mean is not reliable and stable and could be highly affected by these outliers or so called anamolies. By calculation first quartile (25% of the data sorted) and third quartile, the IQR is the difference between these two. The accepted datas are the datas that are between the Q1 and Q3. These outliers are identified and remove depending on the 
         countries and done for each column
 
