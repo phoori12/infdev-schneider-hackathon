@@ -172,18 +172,14 @@ def train_model(X_train,y_train,X_val,y_val):
     # Evaluate the final accuracy on the validation set
     final_val_acc = sum(accuracy_stats['val']) / len(accuracy_stats['val'])
     print(f"Final Validation Accuracy: {final_val_acc:.3f}")
-    
+    model.eval()
     return model
 
 def save_model(model, model_path):
     best_model_state = model.state_dict()
     # model_scripted = torch.jit.script(best_model_state)
     # torch.jit.save(best_model_state, model_path)
-    
     torch.save(model.state_dict(), model_path)
-    loaded_model = model
-    loaded_model.load_state_dict(torch.load(model_path))
-    loaded_model.eval()
     pass
 
 def parse_arguments():
@@ -206,12 +202,7 @@ def main(input_file, model_file):
     df = load_data("../data/test_final.csv")
     X_train, X_val, y_train, y_val = split_data(df) 
     model = train_model(X_train,y_train,X_val,y_val)
-<<<<<<< HEAD
-    
-    save_model(model,"/home/main/Hackathon/infdev-schneider-hackathon/models/model.pt")
-=======
     #save_model(model, '../models/model.pkl')
->>>>>>> 4090557cbc99bf0e807b1e3f118a8c165ce278c9
 
 if __name__ == "__main__":
     args = parse_arguments()
