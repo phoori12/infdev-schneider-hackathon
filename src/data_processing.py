@@ -224,7 +224,24 @@ def fill_Data(df):
             
     return df        
        
-
+def find_max(df):
+    df['Surplus_Max'] = df.idxmax(axis=1)
+    column_mapping = {
+         'Surplus_SP':0,
+         'Surplus_UK':1,
+         'Surplus_DE':2,
+         'Surplus_DK':3,
+         'Surplus_HU':4,
+         'Surplus_SE':5,
+         'Surplus_IT':6,
+         'Surplus_PO':7,
+         'Surplus_NL':8,
+        # Add more mappings as needed
+    }
+    df['Surplus_Max'] = df['Surplus_Max'].map(column_mapping)
+    df['Surplus_Max'] = df['Surplus_Max'].shift(-1)
+    df = df.iloc[1:-1]
+    return df
 
 def save_data(df, output_file):
     # TODO: Save processed data to a CSV file
@@ -232,7 +249,7 @@ def save_data(df, output_file):
     pass
 
 def fill_data(df):
-    for column_name in df.columns:
+    for column_name in df.columns[:-1]:
     # Iterate through each row
         for i in range(1, len(df)):
             if df.iloc[i][column_name] == 0:
@@ -285,6 +302,7 @@ if __name__ == "__main__":
     df = clean_data(df)
     df = preprocess_data(df)
     df = fill_data(df)
+    df = find_max(df)
     save_data(df, "idk")
 
     
