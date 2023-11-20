@@ -229,7 +229,7 @@ def find_max(df):
         # Add more mappings as needed
     }
     df['Predicted_Surplus_Max'] = df['Predicted_Surplus_Max'].map(column_mapping)
-    df['Predicted_Surplus_Max'] = df['Predicted_Surplus_Max'].shift(-1)
+    # df['Predicted_Surplus_Max'] = df['Predicted_Surplus_Max'].shift(-1)
     df = df.iloc[1:-1]
     return df
 
