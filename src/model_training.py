@@ -202,7 +202,7 @@ def main(input_file, model_file):
     df = load_data("../data/test_final.csv")
     X_train, X_val, y_train, y_val = split_data(df) 
     model = train_model(X_train,y_train,X_val,y_val)
-    #save_model(model, '../models/model.pkl')
+    save_model(model, '../models/model.pkl')
 
 if __name__ == "__main__":
     args = parse_arguments()

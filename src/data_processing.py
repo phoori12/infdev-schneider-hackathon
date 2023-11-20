@@ -197,32 +197,11 @@ def preprocess_data(df): #
     #df_processed = df_processed[(df_processed != 0.0).all(axis=1)] # Remove rows with "0.0"
     df_processed = df_processed.reindex(sorted(df_processed.columns), axis=1)
 
+    df_processed = fill_data(df_processed)
+    df_processed = find_max(df_processed)
+    df_processed = df_processed.replace({0: -99999.0})
+
     return df_processed
-
-def fill_Data(df):
-    for column_name in df.columns:
-    # Iterate through each row
-        for i in range(1, len(df)):
-            if df.iloc[i][column_name] == 0:
-                # Find the previous non-zero value
-                prev_non_zero = df.iloc[i - 1][column_name] if i - 1 >= 0 else 0
-
-                # Find the next non-zero value
-                remaining_non_zero = df[column_name].iloc[i:].replace(0, pd.NA).dropna()
-
-                # Check if there are any non-zero values remaining
-                if not remaining_non_zero.empty:
-                    next_non_zero = remaining_non_zero.iloc[0]
-                else:
-                    next_non_zero = 0
-                
-                # Calculate the average of the previous and next non-zero values
-                average_value = (prev_non_zero + next_non_zero) / 2
-                
-                # Set the zero value to the calculated average
-                df.iloc[i, df.columns.get_loc(column_name)] = average_value    
-            
-    return df        
        
 def find_max(df):
     # UK Problem with values between 0 and -1 
@@ -257,6 +236,7 @@ def save_data(df, output_file):
     pass
 
 def fill_data(df):
+    # df = df.interpolate(method='linear',limit_direction='both', axis=0, fill_value=-99999)
     for column_name in df.columns:
     # Iterate through each row
         for i in range(1, len(df)):
@@ -278,7 +258,8 @@ def fill_data(df):
                 
                 # Set the zero value to the calculated average
                 df.iloc[i, df.columns.get_loc(column_name)] = average_value    
-            
+    
+    
     return df    
 
 def parse_arguments():
@@ -304,13 +285,10 @@ def main(input_file, output_file):
     save_data(df_processed, output_file)
 
 if __name__ == "__main__":
-   
     args = parse_arguments()
     df = load_data(os.path.join(os.path.split(os.getcwd())[0], 'data'))
     df = clean_data(df)
     df = preprocess_data(df)
-    df = fill_data(df)
-    df = find_max(df)
     save_data(df, "idk")
 
     
