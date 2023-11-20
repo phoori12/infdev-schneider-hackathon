@@ -3,10 +3,10 @@ import numpy as np
 import argparse
 import torch
 from model_training import MulticlassClassification as mcc_model
-from model_training import ClassifierDataset
+from model_training import ClassifierDataset,split_data
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
-
+import json
 
 def load_data(file_path):
     df = pd.read_csv(file_path)
@@ -14,15 +14,16 @@ def load_data(file_path):
 
 def load_model(model_path):
     model_state_dict = torch.load(model_path)
-    model = mcc_model(num_class = 9, num_feature = 9)
+    model = mcc_model(num_feature = 8 , num_class = 8)
     model.load_state_dict(model_state_dict)
     return model
 
 def make_predictions(df, model):
+
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    df = df.iloc[: , 1:10]
-    df = df.iloc[:-10]
-    
+    # df = df.iloc[: , 1:10]
+    # df = df.iloc[:-10]
+    df = df.iloc[:,:-1]
     model.to(device)
     model.eval()
     
@@ -43,7 +44,7 @@ def make_predictions(df, model):
     # Convert the predicted_classes tensor to a Python list
     predicted_classes = predicted_classes.cpu().numpy().tolist()
 
-    print(predicted_classes)
+    
     return predicted_classes
 
 
@@ -102,12 +103,14 @@ def make_predictions(df, model):
 
 
 def save_predictions(predictions, predictions_file):
-    #predictions_list = predictions.tolist()
-    
-    # print(predictions_list)
-    # json_path = predictions_file
-    # with open(json_path, 'w') as json_file:
-    #     json.dump(predictions_list, json_file)
+   
+     
+    json_data = {"target": {}}
+    for i, num in enumerate(predictions):
+        json_data["target"][str(i)] = num
+
+    with open(predictions_file, 'w') as json_file:
+        json.dump(json_data, json_file, indent=2)
     pass
 
 def parse_arguments():
@@ -115,7 +118,7 @@ def parse_arguments():
     parser.add_argument(
         '--input_file', 
         type=str, 
-        default='../data/test_final.csv',
+        default='../data/val_dataset.csv',
         help='Path to the test data file to make predictions'
     )
     parser.add_argument(
@@ -135,7 +138,7 @@ def parse_arguments():
 def main(input_file, model_file, output_file):
     df = load_data(input_file)
     model = load_model(model_file)
-    model.eval()
+   
     predictions = make_predictions(df, model)
     save_predictions(predictions, output_file)
 

@@ -26,9 +26,12 @@ def load_data(file_path):
             continue
         df_placeholder = pd.read_csv(f)
         df_placeholder = df_placeholder.drop('EndTime', axis=1)
+
+        print("Intepolating the dataset")
+        df_placeholder.iloc[:, -1] = df_placeholder.iloc[:, -1].interpolate(method='linear', limit_direction='both')
+
         df_placeholder['StartTime'] = df_placeholder['StartTime'].str.replace(r'\+00:00Z', '', regex=True)
-
-
+        print("Resampling the dataset")
         # Convert columns to datetime using pd.to_datetime
         df_placeholder['StartTime'] = pd.to_datetime(df_placeholder['StartTime'], format='%Y-%m-%dT%H:%M')
         df_placeholder.set_index('StartTime', inplace=True)
@@ -55,6 +58,7 @@ def load_data(file_path):
             ]
     df.to_csv('../data/test.csv', index=False)
 
+    print("Formatting the dataset")
     df2 = pd.DataFrame(
         columns=['Country IDs', 'StartTime', 'UnitName', 'Biomass', 'Geothermal', 'Hydro Pumped Storage',
                  'Hydro Run-of-river and poundage', 'Hydro Water Reservoir', 'Marine', 'Other Renewable', 'Solar', 'Wind Offshore',
@@ -127,35 +131,35 @@ def remove_outliers_iqr(df, column_name, threshold=1.5):
 #     return df_cleaned
 
 def clean_data(df):
-    df_cleaned = missing_values(df)
-    df_cleaned = duplicates(df_cleaned)
+    # df_cleaned = missing_values(df)
+    df_cleaned = duplicates(df)
 
     # List of unique Country IDs
     unique_country_ids = df_cleaned['Country IDs'].unique()
 
     cleaned_dfs = []
 
-    for country_id in unique_country_ids:
-        country_df = df_cleaned[df_cleaned['Country IDs'] == country_id]
+    # for country_id in unique_country_ids:
+    #     country_df = df_cleaned[df_cleaned['Country IDs'] == country_id]
 
-        # Apply remove_outliers_iqr for each relevant column (excluding 'Country IDs', 'StartTime', and 'UnitName')
-        for col in df_cleaned.columns:
-            if col == 'Country IDs' or col == 'StartTime' or col == 'UnitName':
-                continue
-            country_df = remove_outliers_iqr(country_df, col)
+    #     # Apply remove_outliers_iqr for each relevant column (excluding 'Country IDs', 'StartTime', and 'UnitName')
+    #     for col in df_cleaned.columns:
+    #         if col == 'Country IDs' or col == 'StartTime' or col == 'UnitName':
+    #             continue
+    #         country_df = remove_outliers_iqr(country_df, col)
 
-        cleaned_dfs.append(country_df)
+    #     cleaned_dfs.append(country_df)
 
-    df_cleaned_final = pd.concat(cleaned_dfs, ignore_index=True)
+    # df_cleaned_final = pd.concat(cleaned_dfs, ignore_index=True)
     # df_cleaned_final = remove_rows_with_zero(df_cleaned_final)
-    df.to_csv('../data/test_clean.csv', index=False)
-    return df_cleaned_final
+    df_cleaned.to_csv('../data/test_clean.csv', index=False)
+    return df_cleaned
 
 
 def preprocess_data(df): #
     # TODO: Generate new features, transform existing features, resampling, etc.
     df['StartTime'] = pd.to_datetime(df['StartTime'], format='%Y-%m-%dT%H:%M')
-
+    print(df)
     aggregated_values = []
 
     column_mapping = {
@@ -172,7 +176,8 @@ def preprocess_data(df): #
     }
 
     unique_timestamps = sorted(df['StartTime'].unique())
-    
+    print(df[df['StartTime'] == unique_timestamps[len(unique_timestamps)-1]])
+     # Convert 'Load' to numeric
     for timestamp in unique_timestamps:
         # Filter rows for the current timestamp
         timestamp_data = df[df['StartTime'] == timestamp]
@@ -182,13 +187,13 @@ def preprocess_data(df): #
 
         # Sum up the result for each country
         total_sum = result.groupby(timestamp_data['Country IDs']).sum().to_dict()
-
+        #print(timestamp_data)
         # Map column numbers to names
         total_sum_mapped = {column_mapping.get(key, key): value for key, value in total_sum.items()}
 
         # Print for debugging
-        #print("Timestamp:", timestamp)
-        #print("Total Sum Mapped:", total_sum_mapped)
+        # print("Timestamp:", timestamp)
+        # print("Total Sum Mapped:", total_sum_mapped)
 
         # Append the results to the list
         aggregated_values.append({'StartTime': timestamp, **total_sum_mapped})
@@ -198,7 +203,8 @@ def preprocess_data(df): #
     #df_processed = df_processed[(df_processed != 0.0).all(axis=1)] # Remove rows with "0.0"
     df_processed = df_processed.reindex(sorted(df_processed.columns), axis=1)
 
-    df_processed = fill_data(df_processed)
+    #df_processed = fill_data(df_processed)
+    df_processed = df_processed.drop("Surplus_UK",axis=1)
     df_processed = find_max(df_processed)
     #df_processed = df_processed.replace({0: -10000})
     # imputer = KNNImputer(n_neighbors=2)
@@ -209,8 +215,8 @@ def preprocess_data(df): #
 def find_max(df):
     # UK Problem with values between 0 and -1 
     df_copy = df.copy()
- 
-    df_copy[(df_copy >= -1) & (df_copy <= 0)] = np.nan
+    # df_copy = df_copy.drop("Surplus_UK")
+    # df_copy[(df_copy >= -1) & (df_copy <= 0)] = np.nan
     df['Predicted_Surplus_Max'] = df_copy.idxmax(axis=1)
     for column_name in df.columns[:-1]:
         df.loc[(df[column_name] >= -1) & (df[column_name] <= 0), column_name] = 0
@@ -290,8 +296,8 @@ def main(input_file, output_file):
 if __name__ == "__main__":
     args = parse_arguments()
     df = load_data(os.path.join(os.path.split(os.getcwd())[0], 'data'))
-    df = clean_data(df)
-    df = preprocess_data(df)
-    save_data(df, "idk")
+    df_clean = clean_data(df)
+    df_processed = preprocess_data(df_clean)
+    save_data(df_processed, "idk")
 
     

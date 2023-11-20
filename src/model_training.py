@@ -11,6 +11,7 @@ from sklearn.preprocessing import MinMaxScaler
 
 
 
+
 def multi_acc(y_pred, y_test):
     y_pred_softmax = torch.log_softmax(y_pred, dim = 1)
     _, y_pred_tags = torch.max(y_pred_softmax, dim = 1)
@@ -77,25 +78,30 @@ def load_data(file_path):
     df = pd.read_csv(file_path)
     return df
 
-def split_data(df):
+def split_data(df,file_path):
     scaler = MinMaxScaler()
     train = df.iloc[:, 1:-1]
     train_scaled = scaler.fit_transform(train)
     target = df.iloc[:, -1]
-    # print(target)
+   
+    
     # print(train)
-    X_train, X_val, y_train, y_val = train_test_split(train, target, test_size=0.2, random_state=42)
+    X_train, X_val, y_train, y_val = train_test_split(train, target, test_size=0.2)
+    # save validation Dataset
+    val_dataset = pd.concat([X_val, y_val], axis=1)
+    val_dataset.to_csv(file_path, index=False)
+
     X_train, y_train = np.array(X_train), np.array(y_train)
     X_val, y_val = np.array(X_val), np.array(y_val)
-
+    
     return X_train, X_val, y_train, y_val
 
 
 def train_model(X_train,y_train,X_val,y_val):
 
     BATCH_SIZE = 32
-    input_size =  9  # Number of features (excluding timestamp)
-    num_classes = 9  # Number of countries
+    input_size =  8  # Number of features (excluding timestamp)
+    num_classes = 8  # Number of countries
     num_epochs = 150
 
     accuracy_stats = {
@@ -111,7 +117,7 @@ def train_model(X_train,y_train,X_val,y_val):
     test_dataset = ClassifierDataset(torch.from_numpy(X_val).float(), torch.from_numpy(y_val).long())
     
     train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE)
-    test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE)
+    test_loader = DataLoader(test_dataset, batch_size=1)
                 
     model = MulticlassClassification(input_size ,num_classes)
     criterion = nn.CrossEntropyLoss()
@@ -196,16 +202,16 @@ def parse_arguments():
     parser.add_argument(
         '--model_file', 
         type=str, 
-        default='models/model.pkl', 
+        default='models/model.pt', 
         help='Path to save the trained model'
     )
     return parser.parse_args()
 
 def main(input_file, model_file):
     df = load_data("../data/test_final.csv")
-    X_train, X_val, y_train, y_val = split_data(df) 
-    model = train_model(X_train,y_train,X_val,y_val)
-    #save_model(model, '../models/model.pkl')
+    X_train, X_val, y_train, y_val = split_data(df,"../data/val_dataset.csv") 
+    # model = train_model(X_train,y_train,X_val,y_val)
+    # save_model(model,"../models/model.pt")
 
 if __name__ == "__main__":
     args = parse_arguments()
