@@ -172,7 +172,7 @@ def train_model(X_train,y_train,X_val,y_val):
     # Evaluate the final accuracy on the validation set
     final_val_acc = sum(accuracy_stats['val']) / len(accuracy_stats['val'])
     print(f"Final Validation Accuracy: {final_val_acc:.3f}")
-    model.eval()
+    
     return model
 
 def save_model(model, model_path):
@@ -202,7 +202,7 @@ def main(input_file, model_file):
     df = load_data("../data/test_final.csv")
     X_train, X_val, y_train, y_val = split_data(df) 
     model = train_model(X_train,y_train,X_val,y_val)
-    #save_model(model, '../models/model.pkl')
+    # save_model(model, '../models/model.pkl')
 
 if __name__ == "__main__":
     args = parse_arguments()
