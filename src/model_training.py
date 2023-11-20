@@ -4,14 +4,13 @@ import numpy as np
 import torch
 import matplotlib.pyplot as plt
 import torch.nn as nn
-import torch.optim as optim
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Dataset
 from sklearn.preprocessing import MinMaxScaler
 
 
 
-
+# calculate accuracy
 def multi_acc(y_pred, y_test):
     y_pred_softmax = torch.log_softmax(y_pred, dim = 1)
     _, y_pred_tags = torch.max(y_pred_softmax, dim = 1)
@@ -23,6 +22,7 @@ def multi_acc(y_pred, y_test):
 
     return acc
 
+# create custom dataset sheet
 class ClassifierDataset(Dataset):
 
     def __init__(self, X_data, y_data):
@@ -37,60 +37,63 @@ class ClassifierDataset(Dataset):
 
 
 
-
+# define our neueral network model
 class MulticlassClassification(nn.Module):
-            def __init__(self, num_feature, num_class):
+    def __init__(self, num_feature, num_class):
 
-                super(MulticlassClassification, self).__init__()
+        super(MulticlassClassification, self).__init__()
 
-                self.layer_1 = nn.Linear(num_feature, 512)
-                self.layer_2 = nn.Linear(512, 128)
-                self.layer_3 = nn.Linear(128, 64)
-                self.layer_out = nn.Linear(64, num_class)
+        self.layer_1 = nn.Linear(num_feature, 512)
+        self.layer_2 = nn.Linear(512, 128)
+        self.layer_3 = nn.Linear(128, 64)
+        self.layer_out = nn.Linear(64, num_class)
 
-                self.relu = nn.ReLU()
-                self.dropout = nn.Dropout(p=0.2)
-                self.batchnorm1 = nn.BatchNorm1d(512)
-                self.batchnorm2 = nn.BatchNorm1d(128)
-                self.batchnorm3 = nn.BatchNorm1d(64)
+        self.relu = nn.ReLU()
+        self.dropout = nn.Dropout(p=0.2)
+        self.batchnorm1 = nn.BatchNorm1d(512)
+        self.batchnorm2 = nn.BatchNorm1d(128)
+        self.batchnorm3 = nn.BatchNorm1d(64)
 
-            def forward(self, x):
-                x = self.layer_1(x)
-                x = self.batchnorm1(x)
-                x = self.relu(x)
+    def forward(self, x):
+        x = self.layer_1(x)
+        x = self.batchnorm1(x)
+        x = self.relu(x)
 
-                x = self.layer_2(x)
-                x = self.batchnorm2(x)
-                x = self.relu(x)
-                x = self.dropout(x)
+        x = self.layer_2(x)
+        x = self.batchnorm2(x)
+        x = self.relu(x)
+        x = self.dropout(x)
 
-                x = self.layer_3(x)
-                x = self.batchnorm3(x)
-                x = self.relu(x)
-                x = self.dropout(x)
+        x = self.layer_3(x)
+        x = self.batchnorm3(x)
+        x = self.relu(x)
+        x = self.dropout(x)
 
 
-                x = self.layer_out(x)
+        x = self.layer_out(x)
 
-                return x
+        return x
 
+# load data from preprocessed dataframe
 def load_data(file_path):
     df = pd.read_csv(file_path)
     return df
 
+# split and scale data
 def split_data(df,file_path):
     scaler = MinMaxScaler()
     train = df.iloc[:, 1:-1]
-    train_scaled = scaler.fit_transform(train)
+    
     target = df.iloc[:,-1]
-    
-    
-    # print(train)
+    # debugging
+    #print(df.shape)
+    #print(train)
     X_train, X_val, y_train, y_val = train_test_split(train, target, test_size=0.2, shuffle=False)
+    X_train = scaler.fit_transform(X_train)
     # save validation Dataset
     val_dataset = pd.concat([X_val, y_val], axis=1)
     val_dataset.to_csv(file_path, index=False)
-    
+    # convert dataset to numpyarray
     X_train, y_train = np.array(X_train), np.array(y_train)
     X_val, y_val = np.array(X_val), np.array(y_val)
     
@@ -98,12 +101,13 @@ def split_data(df,file_path):
 
 
 def train_model(X_train,y_train,X_val,y_val):
-
-    BATCH_SIZE = 32
-    input_size =  8  # Number of features (excluding timestamp)
+    # hyperparameters
+    BATCH_SIZE = 32 
+    input_size =  8 # Number of features (excluding timestamp)
     num_classes = 8  # Number of countries
     num_epochs = 150
-
+    
+    # store accuracy_stats and loss_stats
     accuracy_stats = {
         'train': [],
         "val": []
@@ -113,24 +117,32 @@ def train_model(X_train,y_train,X_val,y_val):
         "val": []
     }         
 
+    # store custom dataset(our train and validation datasets)
     train_dataset = ClassifierDataset(torch.from_numpy(X_train).float(), torch.from_numpy(y_train).long())
     test_dataset = ClassifierDataset(torch.from_numpy(X_val).float(), torch.from_numpy(y_val).long())
-    
+    # load Data into Dataloader
     train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE)
     test_loader = DataLoader(test_dataset, batch_size=1)
-                
+    # define model instance             
     model = MulticlassClassification(input_size ,num_classes)
+    # define loss function and optimizer
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.002)
+    # define device  to train our model
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model.to(device)
+
+    # start training 
     print("Begin training.")
     for e in (range(1, num_epochs+1)):
+
         # TRAINING
         train_epoch_loss = 0
         train_epoch_acc = 0
         model.train()
+
         for X_train_batch, y_train_batch in train_loader:
+
             X_train_batch, y_train_batch = X_train_batch.to(device), y_train_batch.to(device)
             optimizer.zero_grad()
 
@@ -144,7 +156,6 @@ def train_model(X_train,y_train,X_val,y_val):
 
             train_epoch_loss += train_loss.item()
             train_epoch_acc += train_acc.item()
-
 
         # VALIDATION
         with torch.no_grad():
@@ -164,6 +175,7 @@ def train_model(X_train,y_train,X_val,y_val):
                 val_epoch_loss += val_loss.item()
                 val_epoch_acc += val_acc.item()
 
+        # check performance of our model
         loss_stats['train'].append(train_epoch_loss/len(train_loader))
         loss_stats['val'].append(val_epoch_loss/len(test_loader))
         accuracy_stats['train'].append(train_epoch_acc/len(train_loader))
@@ -181,13 +193,14 @@ def train_model(X_train,y_train,X_val,y_val):
     # Evaluate the final accuracy on the validation set
     final_val_acc = sum(accuracy_stats['val']) / len(accuracy_stats['val'])
     print(f"Final Validation Accuracy: {final_val_acc:.3f}")
-    model.eval()
+
     return model
 
 def save_model(model, model_path):
+
+    # load weight of the model
     best_model_state = model.state_dict()
-    # model_scripted = torch.jit.script(best_model_state)
-    # torch.jit.save(best_model_state, model_path)
+    # save model
     torch.save(model.state_dict(), model_path)
     pass
 
@@ -196,22 +209,22 @@ def parse_arguments():
     parser.add_argument(
         '--input_file', 
         type=str, 
-        default='data/processed_data.csv', 
+        default='../data/test_final.csv', 
         help='Path to the processed data file to train the model'
     )
     parser.add_argument(
         '--model_file', 
         type=str, 
-        default='models/model.pt', 
+        default='../models/model.pt', 
         help='Path to save the trained model'
     )
     return parser.parse_args()
 
 def main(input_file, model_file):
-    df = load_data("../data/test_final.csv")
+    df = load_data(input_file)
     X_train, X_val, y_train, y_val = split_data(df,"../data/test_dataset.csv") 
-    # model = train_model(X_train,y_train,X_val,y_val)
-    # save_model(model,"../models/model.pt")
+    model = train_model(X_train,y_train,X_val,y_val)
+    save_model(model,model_file)
 
 if __name__ == "__main__":
     args = parse_arguments()

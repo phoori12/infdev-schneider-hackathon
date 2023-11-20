@@ -1,9 +1,6 @@
 import argparse
 import pandas as pd 
 import os
-import numpy as np
-from dateutil import parser
-from sklearn.impute import KNNImputer
 
 COUNTRY_ID_MAP = {
     '10YES-REE------0': 0,  # SP
@@ -21,17 +18,18 @@ COUNTRY_ID_MAP = {
 def load_data(file_path):
     files = [os.path.join(file_path, file) for file in os.listdir(file_path)]
     df = pd.DataFrame()
+    print("Loading Data then doing Interpolating and Resampling . . .")
+    idx = 0
     for f in files:
         if not ((f.endswith('csv') and (not 'test' in f))):
             continue
         df_placeholder = pd.read_csv(f)
         df_placeholder = df_placeholder.drop('EndTime', axis=1)
 
-        print("Intepolating the dataset")
         df_placeholder.iloc[:, -1] = df_placeholder.iloc[:, -1].interpolate(method='linear', limit_direction='both')
 
         df_placeholder['StartTime'] = df_placeholder['StartTime'].str.replace(r'\+00:00Z', '', regex=True)
-        print("Resampling the dataset")
+        
         # Convert columns to datetime using pd.to_datetime
         df_placeholder['StartTime'] = pd.to_datetime(df_placeholder['StartTime'], format='%Y-%m-%dT%H:%M')
         df_placeholder.set_index('StartTime', inplace=True)
@@ -44,28 +42,41 @@ def load_data(file_path):
         df_placeholder = df_placeholder.resample('H').agg(agg_dict)
         df_placeholder.reset_index(inplace=True)
         df = pd.concat([df, df_placeholder], ignore_index=True)
+        idx = idx+1
 
-    df = df[(df.PsrType != 'B02') |
-            (df.PsrType != 'B03') |
-            (df.PsrType != 'B04') |
-            (df.PsrType != 'B05') |
-            (df.PsrType != 'B06') |
-            (df.PsrType != 'B07') |
-            (df.PsrType != 'B08') |
-            (df.PsrType != 'B14') |
-            (df.PsrType != 'B17') |
+    print(f"{idx} files have been loaded, interpolated and resampled in to a dataframe")
+
+    df_count = df.size
+    print(f"{df_count} data points has been assigned in a Dataframe")
+    print("Removing non-green energy sources")
+
+    df = df[(df.PsrType != 'B02') &
+            (df.PsrType != 'B03') &
+            (df.PsrType != 'B04') &
+            (df.PsrType != 'B05') &
+            (df.PsrType != 'B06') &
+            (df.PsrType != 'B07') &
+            (df.PsrType != 'B08') &
+            (df.PsrType != 'B14') &
+            (df.PsrType != 'B17') &
             (df.PsrType != 'B20')
             ]
+    
     df.to_csv('../data/test.csv', index=False)
 
-    print("Formatting the dataset")
+    print(f"{df_count - df.size} data points has been removed")
+
+    print("Reformatting the dataframe")
     df2 = pd.DataFrame(
         columns=['Country IDs', 'StartTime', 'UnitName', 'Biomass', 'Geothermal', 'Hydro Pumped Storage',
                  'Hydro Run-of-river and poundage', 'Hydro Water Reservoir', 'Marine', 'Other Renewable', 'Solar', 'Wind Offshore',
                  'Wind Onshore', 'Load'])
     
+    print("Dataframe formatted columns formated from: ")
+    print("-------------------------")
+    print(list(df.columns))
+    
     result_data = []
-
     for _, group in df.groupby(['AreaID', 'StartTime']):
         country_id = COUNTRY_ID_MAP.get(group['AreaID'].iloc[0], 0)
         start_time = group['StartTime'].iloc[0]
@@ -98,6 +109,11 @@ def load_data(file_path):
                                                      'Hydro Pumped Storage', 'Hydro Run-of-river and poundage',
                                                      'Hydro Water Reservoir', 'Marine','Other Renewable', 'Solar', 'Wind Offshore',
                                                      'Wind Onshore', 'Load'])], ignore_index=True)
+
+    print("To")
+    print(list(df2.columns))
+    print("-------------------------")
+    print(f"Created new dataframe with {df2.size} data points")
 
     df2.to_csv('../data/test_formatted.csv', index=False)
 
@@ -132,10 +148,19 @@ def remove_outliers_iqr(df, column_name, threshold=1.5):
 
 def clean_data(df):
     # df_cleaned = missing_values(df)
+    print("Removing possible duplicates from dataframe")
     df_cleaned = duplicates(df)
+    print(f"{df.size - df_cleaned.size} duplicate data points removed")
 
-    # List of unique Country IDs
-    unique_country_ids = df_cleaned['Country IDs'].unique()
+    # zero_load_timestamps = df[df['Load'] == 0]['StartTime']
+
+    # certain_timestamp = pd.to_datetime('2022-07-20 00:00:00')
+
+    # # Filter the rows before the certain timestamp
+    # # df_cleaned = df.loc[df['StartTime'] <= certain_timestamp] 
+        
+    # # List of unique Country IDs
+    # unique_country_ids = df_cleaned['Country IDs'].unique()
 
     cleaned_dfs = []
 
@@ -152,14 +177,16 @@ def clean_data(df):
 
     # df_cleaned_final = pd.concat(cleaned_dfs, ignore_index=True)
     # df_cleaned_final = remove_rows_with_zero(df_cleaned_final)
+
     df_cleaned.to_csv('../data/test_clean.csv', index=False)
     return df_cleaned
 
 
 def preprocess_data(df): #
     # TODO: Generate new features, transform existing features, resampling, etc.
+    print("Starting to preprocess the dataframe")
+
     df['StartTime'] = pd.to_datetime(df['StartTime'], format='%Y-%m-%dT%H:%M')
-    print(df)
     aggregated_values = []
 
     column_mapping = {
@@ -175,8 +202,9 @@ def preprocess_data(df): #
         # Add more mappings as needed
     }
 
+    timestamp_delete = 0
     unique_timestamps = sorted(df['StartTime'].unique())
-    print(df[df['StartTime'] == unique_timestamps[len(unique_timestamps)-1]])
+    print("Sorted the dataframe by timestamp and adding the green energy generation then subtracting by the load")
      # Convert 'Load' to numeric
     for timestamp in unique_timestamps:
         # Filter rows for the current timestamp
@@ -184,6 +212,8 @@ def preprocess_data(df): #
 
         # Calculate the result for each country
         result = timestamp_data.iloc[:, 3:13].sum(axis=1) - timestamp_data['Load']
+        # if timestamp_data['Load'].eq(0).any().any():
+        #     print(timestamp)
 
         # Sum up the result for each country
         total_sum = result.groupby(timestamp_data['Country IDs']).sum().to_dict()
@@ -200,27 +230,25 @@ def preprocess_data(df): #
 
     # Convert the list of dictionaries to a DataFrame
     df_processed = pd.DataFrame(aggregated_values).set_index('StartTime').fillna(0)
-    #df_processed = df_processed[(df_processed != 0.0).all(axis=1)] # Remove rows with "0.0"
     df_processed = df_processed.reindex(sorted(df_processed.columns), axis=1)
-
-    #df_processed = fill_data(df_processed)
-    # df_processed = df_processed.drop("Surplus_UK",axis=1)
+    print(f"{df.size-df_processed.size} data points has been processed in to the pre-processed dataframe")
+    
+    df_processed = df_processed.drop("Surplus_UK",axis=1)
     df_processed = find_max(df_processed)
-    #df_processed = df_processed.replace({0: -10000})
-    # imputer = KNNImputer(n_neighbors=2)
-    # df_processed = pd.DataFrame(imputer.fit_transform(df_processed), columns=df_processed.columns)
-    # df_processed = df_processed[(df_processed != 0).all(1)]
+    
     return df_processed
        
 def find_max(df):
+    print("Finding the country with the most energy surplus")
     # UK Problem with values between 0 and -1 
     df_copy = df.copy()
+    df_size = df.size
     # df_copy = df_copy.drop("Surplus_UK")
     # df_copy[(df_copy >= -1) & (df_copy <= 0)] = np.nan
     df['Predicted_Surplus_Max'] = df_copy.idxmax(axis=1)
+    print("Created Predicted_Surplus_Max column")
     for column_name in df.columns[:-1]:
         df.loc[(df[column_name] >= -1) & (df[column_name] <= 0), column_name] = 0
-
 
     column_mapping = {
          'Surplus_SP':0,
@@ -237,10 +265,14 @@ def find_max(df):
     df['Predicted_Surplus_Max'] = df['Predicted_Surplus_Max'].map(column_mapping)
     df['Predicted_Surplus_Max'] = df['Predicted_Surplus_Max'].shift(-1)
     df = df.iloc[1:-1]
+
+    print(f"{df.size-df_size} data points has been added to the dataframe")
+
     return df
 
 def save_data(df, output_file):
     # TODO: Save processed data to a CSV file
+    print(f"Saving dataframe with {df.size} data points")
     df.to_csv('../data/test_final.csv', index=True)
     pass
 
