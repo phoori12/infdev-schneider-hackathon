@@ -106,8 +106,8 @@ def save_predictions(predictions, predictions_file):
    
      
     json_data = {"target": {}}
-    for i, num in enumerate(predictions):
-        json_data["target"][str(i)] = num
+    for i, num in enumerate(reversed(predictions)):
+        json_data["target"][str(i+1)] = num
 
     with open(predictions_file, 'w') as json_file:
         json.dump(json_data, json_file, indent=2)

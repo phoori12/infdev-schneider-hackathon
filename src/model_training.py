@@ -81,16 +81,16 @@ def load_data(file_path):
 def split_data(df,file_path):
     scaler = MinMaxScaler()
     train = df.iloc[:, 1:-1]
-    train_scaled = scaler.fit_transform(train)
-    target = df.iloc[:, -1]
-   
+    # train_scaled = scaler.fit_transform(train)
+    target = df.iloc[:,-1]
+    
     
     # print(train)
-    X_train, X_val, y_train, y_val = train_test_split(train, target, test_size=0.2)
+    X_train, X_val, y_train, y_val = train_test_split(train, target, test_size=0.2, shuffle=False)
     # save validation Dataset
     val_dataset = pd.concat([X_val, y_val], axis=1)
     val_dataset.to_csv(file_path, index=False)
-
+    
     X_train, y_train = np.array(X_train), np.array(y_train)
     X_val, y_val = np.array(X_val), np.array(y_val)
     
