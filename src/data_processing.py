@@ -239,28 +239,28 @@ def save_data(df, output_file):
     pass
 
 def fill_data(df):
-    # df = df.interpolate(method='linear',limit_direction='both', axis=0, fill_value=-99999)
-    for column_name in df.columns:
-    # Iterate through each row
-        for i in range(1, len(df)):
-            if df.iloc[i][column_name] == 0:
-                # Find the previous non-zero value
-                prev_non_zero = df.iloc[i - 1][column_name] if i - 1 >= 0 else 0
+    df = df.interpolate(method='linear',limit_direction='both', axis=0)
+    # for column_name in df.columns:
+    # # Iterate through each row
+    #     for i in range(1, len(df)):
+    #         if df.iloc[i][column_name] == 0:
+    #             # Find the previous non-zero value
+    #             prev_non_zero = df.iloc[i - 1][column_name] if i - 1 >= 0 else 0
 
-                # Find the next non-zero value
-                remaining_non_zero = df[column_name].iloc[i:].replace(0, pd.NA).dropna()
+    #             # Find the next non-zero value
+    #             remaining_non_zero = df[column_name].iloc[i:].replace(0, pd.NA).dropna()
 
-                # Check if there are any non-zero values remaining
-                if not remaining_non_zero.empty:
-                    next_non_zero = remaining_non_zero.iloc[0]
-                else:
-                    next_non_zero = 0
+    #             # Check if there are any non-zero values remaining
+    #             if not remaining_non_zero.empty:
+    #                 next_non_zero = remaining_non_zero.iloc[0]
+    #             else:
+    #                 next_non_zero = 0
                 
-                # Calculate the average of the previous and next non-zero values
-                average_value = (prev_non_zero + next_non_zero) / 2
+    #             # Calculate the average of the previous and next non-zero values
+    #             average_value = (prev_non_zero + next_non_zero) / 2
                 
-                # Set the zero value to the calculated average
-                df.iloc[i, df.columns.get_loc(column_name)] = average_value    
+    #             # Set the zero value to the calculated average
+    #             df.iloc[i, df.columns.get_loc(column_name)] = average_value    
     
     
     return df    

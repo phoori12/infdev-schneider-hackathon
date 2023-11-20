@@ -9,6 +9,8 @@ from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Dataset
 from sklearn.preprocessing import MinMaxScaler
 
+
+
 def multi_acc(y_pred, y_test):
     y_pred_softmax = torch.log_softmax(y_pred, dim = 1)
     _, y_pred_tags = torch.max(y_pred_softmax, dim = 1)
@@ -155,6 +157,7 @@ def train_model(X_train,y_train,X_val,y_val):
 
                 val_epoch_loss += val_loss.item()
                 val_epoch_acc += val_acc.item()
+
         loss_stats['train'].append(train_epoch_loss/len(train_loader))
         loss_stats['val'].append(val_epoch_loss/len(test_loader))
         accuracy_stats['train'].append(train_epoch_acc/len(train_loader))
@@ -172,7 +175,7 @@ def train_model(X_train,y_train,X_val,y_val):
     # Evaluate the final accuracy on the validation set
     final_val_acc = sum(accuracy_stats['val']) / len(accuracy_stats['val'])
     print(f"Final Validation Accuracy: {final_val_acc:.3f}")
-    
+    model.eval()
     return model
 
 def save_model(model, model_path):
@@ -202,7 +205,7 @@ def main(input_file, model_file):
     df = load_data("../data/test_final.csv")
     X_train, X_val, y_train, y_val = split_data(df) 
     model = train_model(X_train,y_train,X_val,y_val)
-    # save_model(model, '../models/model.pkl')
+    #save_model(model, '../models/model.pkl')
 
 if __name__ == "__main__":
     args = parse_arguments()

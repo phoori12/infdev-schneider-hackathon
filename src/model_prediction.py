@@ -133,10 +133,9 @@ def parse_arguments():
     return parser.parse_args()
 
 def main(input_file, model_file, output_file):
-    df = load_data(input_file")
+    df = load_data(input_file)
     model = load_model(model_file)
     model.eval()
-    print(model)
     predictions = make_predictions(df, model)
     save_predictions(predictions, output_file)
 
