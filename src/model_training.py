@@ -81,12 +81,12 @@ def load_data(file_path):
 def split_data(df,file_path):
     scaler = MinMaxScaler()
     train = df.iloc[:, 1:-1]
-    # train_scaled = scaler.fit_transform(train)
+    
     target = df.iloc[:,-1]
-    
-    
+    print(df.shape)
     # print(train)
     X_train, X_val, y_train, y_val = train_test_split(train, target, test_size=0.2, shuffle=False)
+    X_train = scaler.fit_transform(X_train)
     # save validation Dataset
     val_dataset = pd.concat([X_val, y_val], axis=1)
     val_dataset.to_csv(file_path, index=False)
@@ -100,7 +100,7 @@ def split_data(df,file_path):
 def train_model(X_train,y_train,X_val,y_val):
 
     BATCH_SIZE = 32
-    input_size =  8  # Number of features (excluding timestamp)
+    input_size =  8 # Number of features (excluding timestamp)
     num_classes = 8  # Number of countries
     num_epochs = 150
 
@@ -209,9 +209,9 @@ def parse_arguments():
 
 def main(input_file, model_file):
     df = load_data("../data/test_final.csv")
-    X_train, X_val, y_train, y_val = split_data(df,"../data/val_dataset.csv") 
-    # model = train_model(X_train,y_train,X_val,y_val)
-    # save_model(model,"../models/model.pt")
+    X_train, X_val, y_train, y_val = split_data(df,"../data/test_dataset.csv") 
+    model = train_model(X_train,y_train,X_val,y_val)
+    save_model(model,"../models/model.pt")
 
 if __name__ == "__main__":
     args = parse_arguments()

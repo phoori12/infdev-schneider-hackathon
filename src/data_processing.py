@@ -21,17 +21,18 @@ COUNTRY_ID_MAP = {
 def load_data(file_path):
     files = [os.path.join(file_path, file) for file in os.listdir(file_path)]
     df = pd.DataFrame()
+    print("Loading Data and doing Interpolation and Resampling . . .")
     for f in files:
         if not ((f.endswith('csv') and (not 'test' in f))):
             continue
         df_placeholder = pd.read_csv(f)
         df_placeholder = df_placeholder.drop('EndTime', axis=1)
 
-        print("Intepolating the dataset")
+        
         df_placeholder.iloc[:, -1] = df_placeholder.iloc[:, -1].interpolate(method='linear', limit_direction='both')
 
         df_placeholder['StartTime'] = df_placeholder['StartTime'].str.replace(r'\+00:00Z', '', regex=True)
-        print("Resampling the dataset")
+        
         # Convert columns to datetime using pd.to_datetime
         df_placeholder['StartTime'] = pd.to_datetime(df_placeholder['StartTime'], format='%Y-%m-%dT%H:%M')
         df_placeholder.set_index('StartTime', inplace=True)
@@ -134,6 +135,13 @@ def clean_data(df):
     # df_cleaned = missing_values(df)
     df_cleaned = duplicates(df)
 
+    # zero_load_timestamps = df[df['Load'] == 0]['StartTime']
+
+    certain_timestamp = pd.to_datetime('2022-07-20 00:00:00')
+
+    # Filter the rows before the certain timestamp
+    # df_cleaned = df.loc[df['StartTime'] <= certain_timestamp] 
+        
     # List of unique Country IDs
     unique_country_ids = df_cleaned['Country IDs'].unique()
 
@@ -175,8 +183,8 @@ def preprocess_data(df): #
         # Add more mappings as needed
     }
 
+    timestamp_delete = 0
     unique_timestamps = sorted(df['StartTime'].unique())
-    print(df[df['StartTime'] == unique_timestamps[len(unique_timestamps)-1]])
      # Convert 'Load' to numeric
     for timestamp in unique_timestamps:
         # Filter rows for the current timestamp
@@ -184,6 +192,8 @@ def preprocess_data(df): #
 
         # Calculate the result for each country
         result = timestamp_data.iloc[:, 3:13].sum(axis=1) - timestamp_data['Load']
+        # if timestamp_data['Load'].eq(0).any().any():
+        #     print(timestamp)
 
         # Sum up the result for each country
         total_sum = result.groupby(timestamp_data['Country IDs']).sum().to_dict()
@@ -200,16 +210,12 @@ def preprocess_data(df): #
 
     # Convert the list of dictionaries to a DataFrame
     df_processed = pd.DataFrame(aggregated_values).set_index('StartTime').fillna(0)
-    #df_processed = df_processed[(df_processed != 0.0).all(axis=1)] # Remove rows with "0.0"
     df_processed = df_processed.reindex(sorted(df_processed.columns), axis=1)
 
-    #df_processed = fill_data(df_processed)
+    
     df_processed = df_processed.drop("Surplus_UK",axis=1)
     df_processed = find_max(df_processed)
-    #df_processed = df_processed.replace({0: -10000})
-    # imputer = KNNImputer(n_neighbors=2)
-    # df_processed = pd.DataFrame(imputer.fit_transform(df_processed), columns=df_processed.columns)
-    # df_processed = df_processed[(df_processed != 0).all(1)]
+    
     return df_processed
        
 def find_max(df):
