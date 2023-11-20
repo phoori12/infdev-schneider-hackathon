@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy as np
 import argparse
 import torch
 from model_training import MulticlassClassification as mcc_model
