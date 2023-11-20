@@ -8,6 +8,7 @@ import torch.optim as optim
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Dataset
 from sklearn.preprocessing import MinMaxScaler
+import prophet
 
 def multi_acc(y_pred, y_test):
     y_pred_softmax = torch.log_softmax(y_pred, dim = 1)
