@@ -17,8 +17,8 @@ def make_predictions(df, model):
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     with torch.no_grad():  # Disable gradient computation during inference
-
         predictions = model(torch.tensor(df.values))
+        
     return predictions
 
 def save_predictions(predictions, predictions_file):
@@ -53,6 +53,7 @@ def parse_arguments():
 def main(input_file, model_file, output_file):
     df = load_data("/home/main/Hackathon/infdev-schneider-hackathon/data/test_final.csv")
     model = load_model("/home/main/Hackathon/infdev-schneider-hackathon/models/model.pt")
+    print(df.values.dtype)
     model.eval()
     print(model)
     predictions = make_predictions(df, model)
