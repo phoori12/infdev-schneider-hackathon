@@ -81,7 +81,7 @@ def load_data(file_path):
 def split_data(df,file_path):
     scaler = MinMaxScaler()
     train = df.iloc[:, 1:-1]
-    # train_scaled = scaler.fit_transform(train)
+    train_scaled = scaler.fit_transform(train)
     target = df.iloc[:,-1]
     
     
@@ -209,7 +209,7 @@ def parse_arguments():
 
 def main(input_file, model_file):
     df = load_data("../data/test_final.csv")
-    X_train, X_val, y_train, y_val = split_data(df,"../data/val_dataset.csv") 
+    X_train, X_val, y_train, y_val = split_data(df,"../data/test_dataset.csv") 
     # model = train_model(X_train,y_train,X_val,y_val)
     # save_model(model,"../models/model.pt")
 

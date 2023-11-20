@@ -204,7 +204,7 @@ def preprocess_data(df): #
     df_processed = df_processed.reindex(sorted(df_processed.columns), axis=1)
 
     #df_processed = fill_data(df_processed)
-    df_processed = df_processed.drop("Surplus_UK",axis=1)
+    # df_processed = df_processed.drop("Surplus_UK",axis=1)
     df_processed = find_max(df_processed)
     #df_processed = df_processed.replace({0: -10000})
     # imputer = KNNImputer(n_neighbors=2)

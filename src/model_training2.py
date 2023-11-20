@@ -9,7 +9,18 @@ from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Dataset
 from sklearn.preprocessing import MinMaxScaler
 from prophet import Prophet
-import pickle
+import json
+
+def save_predictions(predictions, predictions_file):
+   
+     
+    json_data = {"target": {}}
+    for i, num in enumerate((predictions)):
+        json_data["target"][str(i+1)] = num
+
+    with open(predictions_file, 'w') as json_file:
+        json.dump(json_data, json_file, indent=2)
+    pass
 
 
 def load_data(file_path):
@@ -17,87 +28,61 @@ def load_data(file_path):
     return df
 
 def split_data(df):
-    # Convert 'StartTime' column to datetime type
-    df['StartTime'] = pd.to_datetime(df['StartTime'])
-
-    # Define the date range for splitting
-    start_training_date = '2022-01-01'
-    end_testing_date = '2023-01-01'
-
-    # Filter data based on the specified date range
-    selected_data = df.loc[(df['StartTime'] >= start_training_date) & (df['StartTime'] < end_testing_date)]
-
-    # Calculate the total number of days in the selected date range
-    total_days_in_range = (selected_data['StartTime'].max() - selected_data['StartTime'].min()).days
-
-    # Determine the split date for separating training and testing sets
-    split_date = selected_data['StartTime'].min() + pd.to_timedelta(0.8 * total_days_in_range, unit='D')
-
-    # Create training and testing sets
-    training_set = selected_data[selected_data['StartTime'] <= split_date]
-    testing_set = selected_data[selected_data['StartTime'] > split_date]
-
-    # Save the testing set to a CSV file
-    test_data_path = '../data/test_data.csv'
-    testing_set.to_csv(test_data_path, index=False)
-
-    # Display the sizes of the training and testing sets
-    print(f"Training Data Size: {len(training_set)}, Test Data Size: {len(testing_set)}")
-
-    # Return the training set
-    return training_set
-
-def calculate_accuracy(y_true, y_pred):
-    # Implement your custom accuracy calculation based on your specific use case
-    # This is a placeholder; replace it with the appropriate calculation for your problem
-    accuracy = np.mean(np.abs((y_true - y_pred) / y_true))
-    return accuracy
-
-def train_model(training_set):
-    trained_models = {}
-    countries = ['SDE', 'DK', 'SP', 'UK', 'HU', 'SE', 'IT', 'PO', 'NL']
-
-    for country in countries:
-        try:
-            # Construct the column name for the specific country
-            country_column = f'Surplus_{country}'
     
-            # Filter the training set for the specific country
-            country_data = training_set[['StartTime', country_column]]
+    index_split = int(0.8 * len(df))
+    train_data = df.iloc[:index_split, :]
+    test_data = df.iloc[index_split:, :]
+    test_data.to_csv('../data/test_dataset.csv', index=False)
+    # Return the training set
+    return train_data,test_data
 
-            # # Debugging: Print intermediate results
-            # print(f"After filtering for {country} - Rows: {len(country_data)}")
-            # print(country_data.head())
 
-            # Rename the columns
-            country_data = country_data.rename(columns={'StartTime': 'ds', country_column: 'y'})
+def train_model(df):
+        all_forecasts_df = df['StartTime']
+        country_columns = ['Surplus_DE', 'Surplus_DK', 'Surplus_HU', 'Surplus_IT', 'Surplus_NL', 'Surplus_PO', 'Surplus_SE', 'Surplus_SP', 'Surplus_UK']
+        df['StartTime'] = pd.to_datetime(df['StartTime'])
+        for country_column in country_columns:
+            country_data = df[['StartTime', country_column]].rename(columns={'StartTime': 'ds', country_column: 'y'})
+            
+            # Create and fit the Prophet model
+            model = Prophet(interval_width=0.95,  daily_seasonality=True)
+            model.fit(country_data)
+            
+            # Make future DataFrame for prediction
+            future = model.make_future_dataframe(periods=1, freq='H')  # Adjust the number of periods as needed
 
-            country_data = country_data.sort_values(by=['ds'])
-            prophet_data = country_data[['ds', 'y']]
+            # Predict
+            forecast = model.predict(future)
 
-            model = Prophet()
-            model.fit(prophet_data)
-            trained_models[country] = model
-
-            # Assuming you have a validation set to make predictions on
-            forecast = model.predict(prophet_data)
-            y_pred = forecast['yhat'].values
-
-            # Calculate and print accuracy
-            train_accuracy = calculate_accuracy(prophet_data['y'], y_pred)
-            print(f"Train accuracy for {country}: {train_accuracy}")
-
-            # Access training information
-            training_info = model.params['history']
-            train_loss = training_info['train_loss']  # Train loss (RMSE)
-            print(f"Train loss for {country}: {train_loss}")
-
-            print(f"Successfully trained model for {country}")
-
-        except Exception as exception:
-            print(f"Error processing {country}: {str(exception)}")
-
-    return trained_models
+            # Extract the predicted values for the last timestamp
+            predicted_value = forecast['yhat'].iloc[-1]
+            
+            # Store the predicted value for each country (you may want to store it in a dictionary)
+           
+            country_forecast_df = forecast[['ds', 'yhat']].rename(columns={'yhat': country_column})
+            all_forecasts_df  = pd.concat([all_forecasts_df, country_forecast_df[country_column]], axis=1)
+            # For simplicity, I'm printing the country and its corresponding predicted value
+            print(f'Country: {country_column}, Predicted Surplus: {predicted_value}')
+           
+        print(all_forecasts_df.head())
+        
+        df2 = all_forecasts_df.iloc[:,1:]
+        all_forecasts_df['Country_with_Surplus'] = df2.idxmax(axis=1)
+        column_mapping = {
+         'Surplus_SP':0,
+         'Surplus_UK':1,
+         'Surplus_DE':2,
+         'Surplus_DK':3,
+         'Surplus_HU':4,
+         'Surplus_SE':5,
+         'Surplus_IT':6,
+         'Surplus_PO':7,
+         'Surplus_NL':8,
+        # Add more mappings as needed
+        }
+        all_forecasts_df['Country_with_Surplus'] = all_forecasts_df['Country_with_Surplus'].map(column_mapping)
+        all_forecasts_df.to_csv('../data/test_train_predicted.csv', index=False)
+        return all_forecasts_df
 
 def save_model(model, model_file):
     with open(model_file, 'wb') as f:
@@ -121,10 +106,12 @@ def parse_arguments():
 
 def main(input_file, model_file):
     df = load_data(input_file)
-    training_set = split_data(df)
-    model = train_model(training_set)
-    save_model(model, model_file)
+    train_data,test_data = split_data(df)
+    predictions = train_model(test_data)
+    # save_predictions(predictions,'../data/test_val_predicted.csv')
+    
 
 if __name__ == "__main__":
     args = parse_arguments()
     main(args.input_file, args.model_file)
+

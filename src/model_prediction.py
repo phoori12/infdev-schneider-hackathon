@@ -23,7 +23,7 @@ def make_predictions(df, model):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     # df = df.iloc[: , 1:10]
     # df = df.iloc[:-10]
-    df = df.iloc[:,:-1]
+    df = df.iloc[:,1:-1]
     model.to(device)
     model.eval()
     
@@ -106,7 +106,7 @@ def save_predictions(predictions, predictions_file):
    
      
     json_data = {"target": {}}
-    for i, num in enumerate(reversed(predictions)):
+    for i, num in enumerate((predictions)):
         json_data["target"][str(i+1)] = num
 
     with open(predictions_file, 'w') as json_file:
