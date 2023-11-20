@@ -26,9 +26,12 @@ def load_data(file_path):
             continue
         df_placeholder = pd.read_csv(f)
         df_placeholder = df_placeholder.drop('EndTime', axis=1)
+
+        print("Intepolating the dataset")
+        df_placeholder.iloc[:, -1] = df_placeholder.iloc[:, -1].interpolate(method='linear', limit_direction='both')
+
         df_placeholder['StartTime'] = df_placeholder['StartTime'].str.replace(r'\+00:00Z', '', regex=True)
-
-
+        print("Resampling the dataset")
         # Convert columns to datetime using pd.to_datetime
         df_placeholder['StartTime'] = pd.to_datetime(df_placeholder['StartTime'], format='%Y-%m-%dT%H:%M')
         df_placeholder.set_index('StartTime', inplace=True)
@@ -55,6 +58,7 @@ def load_data(file_path):
             ]
     df.to_csv('../data/test.csv', index=False)
 
+    print("Formatting the dataset")
     df2 = pd.DataFrame(
         columns=['Country IDs', 'StartTime', 'UnitName', 'Biomass', 'Geothermal', 'Hydro Pumped Storage',
                  'Hydro Run-of-river and poundage', 'Hydro Water Reservoir', 'Marine', 'Other Renewable', 'Solar', 'Wind Offshore',
