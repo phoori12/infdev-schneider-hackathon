@@ -3,6 +3,7 @@ import pandas as pd
 import os
 import numpy as np
 from dateutil import parser
+from sklearn.impute import KNNImputer
 
 COUNTRY_ID_MAP = {
     '10YES-REE------0': 0,  # SP
@@ -199,8 +200,10 @@ def preprocess_data(df): #
 
     df_processed = fill_data(df_processed)
     df_processed = find_max(df_processed)
-    df_processed = df_processed.replace({0: -99999.0})
-
+    #df_processed = df_processed.replace({0: -10000})
+    # imputer = KNNImputer(n_neighbors=2)
+    # df_processed = pd.DataFrame(imputer.fit_transform(df_processed), columns=df_processed.columns)
+    # df_processed = df_processed[(df_processed != 0).all(1)]
     return df_processed
        
 def find_max(df):
