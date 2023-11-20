@@ -115,30 +115,30 @@ def parse_arguments():
     parser.add_argument(
         '--input_file', 
         type=str, 
-        default='data/test_data.csv', 
+        default='../data/test_final.csv',
         help='Path to the test data file to make predictions'
     )
     parser.add_argument(
         '--model_file', 
         type=str, 
-        default='models/model.pkl',
+        default='../models/model.pt',
         help='Path to the trained model file'
     )
     parser.add_argument(
         '--output_file', 
         type=str, 
-        default='predictions/predictions.json', 
+        default='../predictions/predictions.json',
         help='Path to save the predictions'
     )
     return parser.parse_args()
 
 def main(input_file, model_file, output_file):
-    df = load_data("../data/test_final.csv")
-    model = load_model("../models/model.pt")
+    df = load_data(input_file")
+    model = load_model(model_file)
     model.eval()
     print(model)
     predictions = make_predictions(df, model)
-    save_predictions(predictions, "../predictions/predictions.json")
+    save_predictions(predictions, output_file)
 
 if __name__ == "__main__":
     args = parse_arguments()
