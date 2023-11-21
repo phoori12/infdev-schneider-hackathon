@@ -14,13 +14,13 @@ After You've installed the dependencies, activate the environment with,
 
 `conda activate infdev-se`
 
-Lastly to run our script, navigate to the scripts folder and use the following command on the terminal:
+Lastly to run our script, type the following command on the terminal:
 
-`./run_pipeline.sh <start_date> <end_date> <raw_data_file> <processed_data_file> <model_file> <test_data_file> <predictions_file>`
+`./scripts/run_pipeline.sh <start_date> <end_date> <raw_data_file> <processed_data_file> <model_file> <test_data_file> <predictions_file>`
 
 For Example: 
 
-`./run_pipeline.sh 2020-01-01 2020-01-31 data/raw_data.csv data/processed_data.csv models/model.pkl data/test_data.csv predictions/predictions.json`
+`./scripts/run_pipeline.sh 2020-01-01 2020-01-31 data/ data/processed_data.csv models/model.pt data/test.csv predictions/predictions.json`
 
 ## The Challenge
 
@@ -42,7 +42,7 @@ We have divided our workflows into three sections:
 
 * Data Processing
 
-1. Regarding the time series of each .csv, which may vary, we decided to resample the data as we load it into a pandas dataframe. We resampled it into 1-hour series by summing up the values in smaller time series to reach 1 hour.
+1. Regarding the time series of each .csv, which may vary, we decided to resample the data as we load it into a pandas dataframe. Before we resample the data, we decided to interpolate to account for the missing values. After that we resampled it into 1-hour series by summing up the values in smaller time series to reach 1 hour. 
 
 
 2. After resampling all of the time series in the dataframe, we filter out the unnessesary energy sources because we only want the values from the green energy sources. After filtering We are left with 10 types of green energy sources.
@@ -72,10 +72,7 @@ We have divided our workflows into three sections:
     | ------------- |:-------------:|:-------------:|:-------------:|:-------------:|:-------------:|:-------------:|:-------------:|:-------------:|:-------------:|:-------------:|:-------------:|:-------------:|:-------------:|
 
 
-4. After acquiring the formatted dataframe, we will clean it with the data_cleaning function. The Data Cleaning consists of three processes:
-    - Removing missing values. All the missing values for each type of green energy, excluding the load, were removed.
-    - Removing duplicate rows
-    - Removing outliers using the IQR-Method (Interquartile Range). The mean is not reliable and stable and could be highly affected by these outliers. By calculating the first quartile (25% of the data sorted) and third quartile (75% of the data sorted), we can calculate the IQR, which is the difference between the first and third quartile. The accepted data are those between Q1 and Q3. Outliers are identified and removed for each column, depending on the countries.
+4. After acquiring the formatted dataframe, we will clean it with the data_cleaning function, which is just removing the duplicate rows. We don't want to remove too much row because that could mess with the timestamp order.
 
 
 5. After the Cleaning process, we will reformat the dataframe columns again to:
@@ -90,25 +87,23 @@ We have divided our workflows into three sections:
 
 ### Model Training <a name="model-training"></a>
 
-ideas
+We acknowledged that the given dataset is a time-series problem and would require time-series forecasting model to achieve a decent accuracy. However, we came up with another approach that can convert time-series problem to normal multiclass-classifier model.
 
-    We acknowledged that the given dataset is a time-series problem and would require time-series forecasting model to achieve a decent accuracy. However, we came up with another approach that can convert time-series problem to normal multiclass-classifier model.
-    
-    Since time-series problem is sequential. We can exactly predict which country will have the most surplus energy  by looking ahead 1 row. After calculating which country generated the most surplus energy and gather it to the right most column of our dataset, we shift up the column and drop the last row of the dataset(this data went missing but only 1 row). Now we can use our multiclass classifier model to find the relationship between our features(energy surplus of each 9 countries) and our class(country that has the most surplus energy). 
-
-
+Since time-series problem is sequential. We can exactly predict which country will have the most surplus energy  by looking ahead 1 row. After calculating which country generated the most surplus energy and gather it to the right most column of our dataset, we shift up the column and drop the last row of the dataset(this data went missing but only 1 row). Now we can use our multiclass classifier model to find the relationship between our features(energy surplus of each 9 countries) and our class(country that has the most surplus energy). 
 
 ![Multiclass neural Network](https://www.researchgate.net/publication/334311674/figure/fig4/AS:963538122190856@1606736798392/The-proposed-Convolutional-Neural-Network-for-multiclass-classification-of-whole-infrared.png)
 
-Problems
+## Encountered Problems
 
-    we tried to implement MaxMinscaler and Standard Scaler before training of our model, but the result are doubtlful. From that we decided not to use any scaler. After the training finished we set our model to evaluation mode and validate it with the test_dataset to evaluate our model before going in to the next step.
+we tried to implement MaxMinscaler and Standard Scaler before training of our model, but the result are doubtful. From that we decided not to use any scaler. After the training finished we set our model to evaluation mode and validate it with the test_dataset to evaluate our model before going in to the next step.
+
+
 
 
 ### Model Prediction and Re-Evaluation <a name="model-prediction-and-re-evaluation"></a>
 
-    In Model Prediction section we loaded our the best weights of our dataset that we saved in Model Training and set our model to evaluation mode, then let the model make predictions according to the test_dataset that we already debugged before. After we recieve the predictions in list data type, we then convert it to the required JSON file structure with save_prediction method.
+In Model Prediction section we loaded our the best weights of our dataset that we saved in Model Training and set our model to evaluation mode, then let the model make predictions according to the test_dataset that we already debugged before. After we recieve the predictions in list data type, we then convert it to the required JSON file structure with save_prediction method.
 
-    Remember that our test_dataset is 20% of the whole data which is 1/5 of the whole year, we need to cut off the unwanted data(data that are not the previous 442 hours before the year end).
+Remember that our test_dataset is 20% of the whole data which is 1/5 of the whole year, we need to cut off the unwanted data(data that are not the previous 442 hours before the year end).
     
 ## Team Members
