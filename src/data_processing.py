@@ -221,6 +221,16 @@ def find_max(df):
     return df
 
 def save_data(df, output_file):
+    # delete all files in data folder
+    logging.info("Cleaning data directory")
+    files = os.listdir('data/')
+    # Iterate through the files and delete each one
+    for file in files:
+        file_path = os.path.join('data/', file)
+        try:
+            os.unlink(file_path)
+        except Exception as e:
+            logging.info(e)
     logging.info(f"Saving dataframe with {df.size} data points")
     df.to_csv(output_file, index=True)
     pass

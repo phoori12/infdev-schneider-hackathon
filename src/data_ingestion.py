@@ -3,7 +3,11 @@ import datetime
 import pandas as pd
 from utils import perform_get_request, xml_to_load_dataframe, xml_to_gen_data
 import os
+import logging
+import sys
 
+logger = logging.getLogger()
+logging.basicConfig(level=logging.INFO, stream=sys.stdout) 
 def get_load_data_from_entsoe(regions, periodStart='202302240000', periodEnd='202303240000', output_path='./data'):
     
     # TODO: There is a period range limit of 1 year for this API. Process in 1 year chunks if needed
@@ -24,7 +28,7 @@ def get_load_data_from_entsoe(regions, periodStart='202302240000', periodEnd='20
     file_count = 0
     # Loop through the regions and get data for each region
     for region, area_code in regions.items():
-        print(f'Fetching data for {region}...')
+        logging.info(f'Fetching data for {region}...')
         params['outBiddingZone_Domain'] = area_code
     
         # Use the requests library to get data from the API for the specified time range
@@ -37,8 +41,8 @@ def get_load_data_from_entsoe(regions, periodStart='202302240000', periodEnd='20
         df.to_csv(f'{output_path}/load_{region}.csv', index=False)
         file_count = file_count + 1
     
-    print("")
-    print(f"{file_count} energy load files have been created")
+    logging.info("")
+    logging.info(f"{file_count} energy load files have been created")
     return
 
 def get_gen_data_from_entsoe(regions, periodStart='202302240000', periodEnd='202303240000', output_path='./data'):
@@ -61,7 +65,7 @@ def get_gen_data_from_entsoe(regions, periodStart='202302240000', periodEnd='202
     file_count = 0
     # Loop through the regions and get data for each region
     for region, area_code in regions.items():
-        print(f'Fetching data for {region}...')
+        logging.info(f'Fetching data for {region}...')
         params['outBiddingZone_Domain'] = area_code
         params['in_Domain'] = area_code
     
@@ -77,8 +81,8 @@ def get_gen_data_from_entsoe(regions, periodStart='202302240000', periodEnd='202
             df.to_csv(f'{output_path}/gen_{region}_{psr_type}.csv', index=False)
             file_count = file_count + 1
 
-    print("")
-    print(f"{file_count} energy load files have been created")
+    logging.info("")
+    logging.info(f"{file_count} energy load files have been created")
     return
 
 
@@ -105,7 +109,7 @@ def parse_arguments():
     return parser.parse_args()
 
 def main(start_time, end_time, output_path):
-    print("Fetching Data from API")
+    logging.info("Fetching Data from API")
     regions = {
         'HU': '10YHU-MAVIR----U',
         'IT': '10YIT-GRTN-----B',

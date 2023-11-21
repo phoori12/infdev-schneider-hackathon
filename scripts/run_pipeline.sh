@@ -1,9 +1,10 @@
 #!/bin/bash
 
 # You can run this script from the command line using:
-# ./run_pipeline.sh <start_date> <end_date> <raw_data_file> <processed_data_file> <model_file> <test_data_file> <predictions_file>
+# ./scripts/run_pipeline.sh <start_date> <end_date> <raw_data_file> <processed_data_file> <model_file> <test_data_file> <predictions_file>
 # For example:
-# ./run_pipeline.sh 2020-01-01 2020-01-31 data/ data/processed_data.csv models/model.pt data/test_data.csv predictions/predictions.json
+# ./scripts/run_pipeline.sh 2020-01-01 2020-01-31 data/ data/processed_data.csv models/model.pt data/test.csv predictions/predictions.json
+
 
 # Get command line arguments
 start_date="$1"
@@ -16,7 +17,7 @@ predictions_file="$7"
 
 # Run data_ingestion.py
 echo "Starting data ingestion..."
-# python src/data_ingestion.py --start_date="$start_date" --end_date="$end_date" --output_file="$raw_data_file"
+python src/data_ingestion.py --start_date="$start_date" --end_date="$end_date" --output_file="$raw_data_file"
 
 # Run data_processing.py
 echo "Starting data processing..."

@@ -106,7 +106,7 @@ def train_model(X_train,y_train,X_val,y_val):
     BATCH_SIZE = 32 
     input_size =  8 # Number of features (excluding timestamp)
     num_classes = 8  # Number of countries
-    num_epochs = 120
+    num_epochs = 70
     LEARNING_RATE = 0.001
     # store accuracy_stats and loss_stats
     accuracy_stats = {
@@ -141,7 +141,7 @@ def train_model(X_train,y_train,X_val,y_val):
         train_epoch_loss = 0
         train_epoch_acc = 0
         model.train()
-
+        
         for X_train_batch, y_train_batch in train_loader:
 
             X_train_batch, y_train_batch = X_train_batch.to(device), y_train_batch.to(device)
@@ -185,6 +185,8 @@ def train_model(X_train,y_train,X_val,y_val):
 
         logging.info(f'Epoch {e+0:03}: | Train Loss: {train_epoch_loss/len(train_loader):.5f} | Val Loss: {test_epoch_loss/len(test_loader):.5f} | Train Acc: {train_epoch_acc/len(train_loader):.3f}| Val Acc: {test_epoch_acc/len(test_loader):.3f}')
     
+    # Assuming loss_stats and accuracy_stats are available after training
+    # plot_learning_curve(loss_stats['train'], loss_stats['val'], accuracy_stats['train'], accuracy_stats['val'])
     logging.info("Training finished. Calculating final accuracy...")
 
     # Evaluate the final accuracy on the training set
@@ -194,6 +196,7 @@ def train_model(X_train,y_train,X_val,y_val):
     # Evaluate the final accuracy on the validation set
     final_test_acc = sum(accuracy_stats['val']) / len(accuracy_stats['val'])
     logging.info(f"Final Validation Accuracy: {final_test_acc:.3f}")
+
 
     return model
 
@@ -223,6 +226,31 @@ def parse_arguments():
         help='Path to save the trained model'
     )
     return parser.parse_args()
+
+def plot_learning_curve(train_losses, val_losses, train_accuracies, val_accuracies):
+    epochs = range(1, len(train_losses) + 1)
+
+    # Plot training and validation loss
+    plt.figure(figsize=(12, 4))
+    plt.subplot(1, 2, 1)
+    plt.plot(epochs, train_losses, label='Training Loss')
+    plt.plot(epochs, val_losses, label='Validation Loss')
+    plt.title('Training and Validation Loss')
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.legend()
+
+    # Plot training and validation accuracy
+    plt.subplot(1, 2, 2)
+    plt.plot(epochs, train_accuracies, label='Training Accuracy')
+    plt.plot(epochs, val_accuracies, label='Validation Accuracy')
+    plt.title('Training and Validation Accuracy')
+    plt.xlabel('Epochs')
+    plt.ylabel('Accuracy')
+    plt.legend()
+
+    plt.tight_layout()
+    plt.show()
 
 def main(input_file, model_file):
     df = load_data(input_file)
