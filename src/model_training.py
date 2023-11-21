@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import torch.nn as nn
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Dataset
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler,StandardScaler
 
 
 
@@ -18,7 +18,7 @@ def multi_acc(y_pred, y_test):
     correct_pred = (y_pred_tags == y_test).float()
     acc = correct_pred.sum() / len(correct_pred)
 
-    acc = torch.round(acc * 100)
+    acc = torch.round(acc*100)
 
     return acc
 
@@ -81,7 +81,7 @@ def load_data(file_path):
 
 # split and scale data
 def split_data(df,file_path):
-    scaler = MinMaxScaler()
+
     train = df.iloc[:, 1:-1]
     
     target = df.iloc[:,-1]
@@ -89,10 +89,10 @@ def split_data(df,file_path):
     #print(df.shape)
     #print(train)
     X_train, X_val, y_train, y_val = train_test_split(train, target, test_size=0.2, shuffle=False)
-    X_train = scaler.fit_transform(X_train)
-    # save validation Dataset
+     # save validation Dataset
     val_dataset = pd.concat([X_val, y_val], axis=1)
     val_dataset.to_csv(file_path, index=False)
+
     # convert dataset to numpyarray
     X_train, y_train = np.array(X_train), np.array(y_train)
     X_val, y_val = np.array(X_val), np.array(y_val)
@@ -105,7 +105,7 @@ def train_model(X_train,y_train,X_val,y_val):
     BATCH_SIZE = 32 
     input_size =  8 # Number of features (excluding timestamp)
     num_classes = 8  # Number of countries
-    num_epochs = 150
+    num_epochs = 70
     
     # store accuracy_stats and loss_stats
     accuracy_stats = {
@@ -160,8 +160,8 @@ def train_model(X_train,y_train,X_val,y_val):
         # VALIDATION
         with torch.no_grad():
 
-            val_epoch_loss = 0
-            val_epoch_acc = 0
+            test_epoch_loss = 0
+            test_epoch_acc = 0
 
             model.eval()
             for X_val_batch, y_val_batch in test_loader:
@@ -169,20 +169,20 @@ def train_model(X_train,y_train,X_val,y_val):
 
                 y_val_pred = model(X_val_batch)
 
-                val_loss = criterion(y_val_pred, y_val_batch)
-                val_acc = multi_acc(y_val_pred, y_val_batch)
+                test_loss = criterion(y_val_pred, y_val_batch)
+                test_acc = multi_acc(y_val_pred, y_val_batch)
 
-                val_epoch_loss += val_loss.item()
-                val_epoch_acc += val_acc.item()
+                test_epoch_loss += test_loss.item()
+                test_epoch_acc += test_acc.item()
 
         # check performance of our model
         loss_stats['train'].append(train_epoch_loss/len(train_loader))
-        loss_stats['val'].append(val_epoch_loss/len(test_loader))
+        loss_stats['val'].append(test_epoch_loss/len(test_loader))
         accuracy_stats['train'].append(train_epoch_acc/len(train_loader))
-        accuracy_stats['val'].append(val_epoch_acc/len(test_loader))
+        accuracy_stats['val'].append(test_epoch_acc/len(test_loader))
 
 
-        print(f'Epoch {e+0:03}: | Train Loss: {train_epoch_loss/len(train_loader):.5f} | Val Loss: {val_epoch_loss/len(test_loader):.5f} | Train Acc: {train_epoch_acc/len(train_loader):.3f}| Val Acc: {val_epoch_acc/len(test_loader):.3f}')
+        print(f'Epoch {e+0:03}: | Train Loss: {train_epoch_loss/len(train_loader):.5f} | Val Loss: {test_epoch_loss/len(test_loader):.5f} | Train Acc: {train_epoch_acc/len(train_loader):.3f}| Val Acc: {test_epoch_acc/len(test_loader):.3f}')
     
     print("Training finished. Calculating final accuracy...")
 
@@ -191,8 +191,8 @@ def train_model(X_train,y_train,X_val,y_val):
     print(f"Final Training Accuracy: {final_train_acc:.3f}")
 
     # Evaluate the final accuracy on the validation set
-    final_val_acc = sum(accuracy_stats['val']) / len(accuracy_stats['val'])
-    print(f"Final Validation Accuracy: {final_val_acc:.3f}")
+    final_test_acc = sum(accuracy_stats['val']) / len(accuracy_stats['val'])
+    print(f"Final Validation Accuracy: {final_test_acc:.3f}")
 
     return model
 
@@ -200,6 +200,9 @@ def save_model(model, model_path):
 
     # load weight of the model
     best_model_state = model.state_dict()
+    #print our model's weights
+    print("Model's weights: ",best_model_state)
+   
     # save model
     torch.save(model.state_dict(), model_path)
     pass
