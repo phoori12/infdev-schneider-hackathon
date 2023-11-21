@@ -95,10 +95,11 @@ Since time-series problem is sequential. We can exactly predict which country wi
 
 ## Encountered Problems
 
-we tried to implement MaxMinscaler and Standard Scaler before training of our model, but the result are doubtful. From that we decided not to use any scaler. After the training finished we set our model to evaluation mode and validate it with the test_dataset to evaluate our model before going in to the next step.
+We've tried to implement MaxMinscaler and Standard Scaler before training of our model, but the result were doubtful. From that we decided not to use any scaler. After the training finished we set our model to evaluation mode and validate it with the test_dataset to evaluate our model before going in to the next step.
 
+![Training Validation loss and accruracy](https://github.com/phoori12/infdev-schneider-hackathon/blob/main/image/Figure_1.png)
 
-
+As you can see from the graph, our model is not perfectly trained. Due to the fact that we spent too much time on data pre-processing, which leads to the facts that we have little time to improve on the model.
 
 ### Model Prediction and Re-Evaluation <a name="model-prediction-and-re-evaluation"></a>
 
@@ -107,3 +108,13 @@ In Model Prediction section we loaded our the best weights of our dataset that w
 Remember that our test_dataset is 20% of the whole data which is 1/5 of the whole year, we need to cut off the unwanted data(data that are not the previous 442 hours before the year end).
     
 ## Team Members
+
+We are a team of students from the Technical University of Berlin with little to none experience of data science and deep learning. But still we find this as a good oppurtunity for us, as we learnt a lot from the process.
+
+Our Team consists of:
+
+Woraphon Choaywong - Data Ingestion, Data Processing, Model Predictions, Pipeline monitoring
+
+Phurin Kitsakul - Deep Learning
+
+Richie Jonathan - Data Cleaning and Model Training
