@@ -106,8 +106,8 @@ def train_model(X_train,y_train,X_val,y_val):
     BATCH_SIZE = 32 
     input_size =  8 # Number of features (excluding timestamp)
     num_classes = 8  # Number of countries
-    num_epochs = 150
-    
+    num_epochs = 120
+    LEARNING_RATE = 0.001
     # store accuracy_stats and loss_stats
     accuracy_stats = {
         'train': [],
@@ -128,7 +128,7 @@ def train_model(X_train,y_train,X_val,y_val):
     model = MulticlassClassification(input_size ,num_classes)
     # define loss function and optimizer
     criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.002)
+    optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
     # define device  to train our model
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model.to(device)
@@ -202,7 +202,7 @@ def save_model(model, model_path):
     # load weight of the model
     best_model_state = model.state_dict()
     #print our model's weights
-    print("Model's weights: ",best_model_state)
+    print("Model's weights: \n",best_model_state)
    
     # save model
     torch.save(model.state_dict(), model_path)
