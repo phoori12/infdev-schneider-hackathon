@@ -1,6 +1,11 @@
 import argparse
 import pandas as pd 
 import os
+import logging
+import sys
+
+logger = logging.getLogger()
+logging.basicConfig(level=logging.INFO, stream=sys.stdout) 
 
 COUNTRY_ID_MAP = {
     '10YES-REE------0': 0,  # SP
@@ -14,14 +19,13 @@ COUNTRY_ID_MAP = {
     '10YNL----------L': 8   # NL
 }
 
-    
 def load_data(file_path):
     files = [os.path.join(file_path, file) for file in os.listdir(file_path)]
     df = pd.DataFrame()
-    print("Loading Data then doing Interpolating and Resampling . . .")
+    logging.info("Loading Data then doing Interpolating and Resampling . . .")
     idx = 0
     for f in files:
-        if not ((f.endswith('csv') and (not 'test' in f))):
+        if not ((f.endswith('csv') and (('load' in f) or ('gen' in f)))):
             continue
         df_placeholder = pd.read_csv(f)
         df_placeholder = df_placeholder.drop('EndTime', axis=1)
@@ -44,11 +48,11 @@ def load_data(file_path):
         df = pd.concat([df, df_placeholder], ignore_index=True)
         idx = idx+1
 
-    print(f"{idx} files have been loaded, interpolated and resampled in to a dataframe")
+    logging.info(f"{idx} files have been loaded, interpolated and resampled in to a dataframe")
 
     df_count = df.size
-    print(f"{df_count} data points has been assigned in a Dataframe")
-    print("Removing non-green energy sources")
+    logging.info(f"{df_count} data points has been assigned in a Dataframe")
+    logging.info("Removing non-green energy sources")
 
     df = df[(df.PsrType != 'B02') &
             (df.PsrType != 'B03') &
@@ -62,19 +66,19 @@ def load_data(file_path):
             (df.PsrType != 'B20')
             ]
     
-    df.to_csv('../data/test.csv', index=False)
+    # df.to_csv('../data/test.csv', index=False)
 
-    print(f"{df_count - df.size} data points has been removed")
+    logging.info(f"{df_count - df.size} data points has been removed")
 
-    print("Reformatting the dataframe")
+    logging.info("Reformatting the dataframe")
     df2 = pd.DataFrame(
         columns=['Country IDs', 'StartTime', 'UnitName', 'Biomass', 'Geothermal', 'Hydro Pumped Storage',
                  'Hydro Run-of-river and poundage', 'Hydro Water Reservoir', 'Marine', 'Other Renewable', 'Solar', 'Wind Offshore',
                  'Wind Onshore', 'Load'])
     
-    print("Dataframe formatted columns formated from: ")
-    print("-------------------------")
-    print(list(df.columns))
+    logging.info("Dataframe formatted columns formated from: ")
+    logging.info("-------------------------")
+    logging.info(list(df.columns))
     
     result_data = []
     for _, group in df.groupby(['AreaID', 'StartTime']):
@@ -101,7 +105,7 @@ def load_data(file_path):
                         marine,other_renew,solar, wind_off, wind_on, load])
         
         
-        # print([country_id, start_time, unit_name,
+        # logging.info([country_id, start_time, unit_name,
         #        biomass, geothermal, hydro_pump, hydro_run, hydro_water,
         #        marine, other_renew, solar, wind_off, wind_on, load])
         
@@ -110,81 +114,33 @@ def load_data(file_path):
                                                      'Hydro Water Reservoir', 'Marine','Other Renewable', 'Solar', 'Wind Offshore',
                                                      'Wind Onshore', 'Load'])], ignore_index=True)
 
-    print("To")
-    print(list(df2.columns))
-    print("-------------------------")
-    print(f"Created new dataframe with {df2.size} data points")
+    logging.info("To")
+    logging.info(list(df2.columns))
+    logging.info("-------------------------")
+    logging.info(f"Created new dataframe with {df2.size} data points")
 
-    df2.to_csv('../data/test_formatted.csv', index=False)
+    # df2.to_csv('../data/test_formatted.csv', index=False)
 
     return df2
  
 
-# Functions for clean_data
-def missing_values(df):
-    df_cleaned = df.loc[df['Load'] != 0]
-    return df_cleaned
-
+# Functions for cleaning data
 def duplicates(df):
     df_cleaned = df.drop_duplicates()
     return df_cleaned
 
-def remove_outliers_iqr(df, column_name, threshold=1.5):
-    Q1 = df[column_name].quantile(0.25)
-    Q3 = df[column_name].quantile(0.75)
-    IQR = Q3 - Q1
-
-    lower_bound = Q1 - threshold * IQR
-    upper_bound = Q3 + threshold * IQR
-
-    cleaned_df = df[(df[column_name] >= lower_bound) & (df[column_name] <= upper_bound)]
-
-    return cleaned_df
-
-# def remove_rows_with_zero(df):
-#     df_cleaned = df[(df != 0).all(axis=1)]
-#
-#     return df_cleaned
-
 def clean_data(df):
     # df_cleaned = missing_values(df)
-    print("Removing possible duplicates from dataframe")
+    logging.info("Removing possible duplicates from dataframe")
     df_cleaned = duplicates(df)
-    print(f"{df.size - df_cleaned.size} duplicate data points removed")
+    logging.info(f"{df.size - df_cleaned.size} duplicate data points removed")
 
-    # zero_load_timestamps = df[df['Load'] == 0]['StartTime']
-
-    # certain_timestamp = pd.to_datetime('2022-07-20 00:00:00')
-
-    # # Filter the rows before the certain timestamp
-    # # df_cleaned = df.loc[df['StartTime'] <= certain_timestamp] 
-        
-    # # List of unique Country IDs
-    # unique_country_ids = df_cleaned['Country IDs'].unique()
-
-    cleaned_dfs = []
-
-    # for country_id in unique_country_ids:
-    #     country_df = df_cleaned[df_cleaned['Country IDs'] == country_id]
-
-    #     # Apply remove_outliers_iqr for each relevant column (excluding 'Country IDs', 'StartTime', and 'UnitName')
-    #     for col in df_cleaned.columns:
-    #         if col == 'Country IDs' or col == 'StartTime' or col == 'UnitName':
-    #             continue
-    #         country_df = remove_outliers_iqr(country_df, col)
-
-    #     cleaned_dfs.append(country_df)
-
-    # df_cleaned_final = pd.concat(cleaned_dfs, ignore_index=True)
-    # df_cleaned_final = remove_rows_with_zero(df_cleaned_final)
-
-    df_cleaned.to_csv('../data/test_clean.csv', index=False)
+    # df_cleaned.to_csv('../data/test_clean.csv', index=False)
     return df_cleaned
 
 
 def preprocess_data(df): #
-    # TODO: Generate new features, transform existing features, resampling, etc.
-    print("Starting to preprocess the dataframe")
+    logging.info("Starting to preprocess the dataframe")
 
     df['StartTime'] = pd.to_datetime(df['StartTime'], format='%Y-%m-%dT%H:%M')
     aggregated_values = []
@@ -199,12 +155,10 @@ def preprocess_data(df): #
         6: 'Surplus_IT',
         7: 'Surplus_PO',
         8: 'Surplus_NL',
-        # Add more mappings as needed
     }
 
-    timestamp_delete = 0
     unique_timestamps = sorted(df['StartTime'].unique())
-    print("Sorted the dataframe by timestamp and adding the green energy generation then subtracting by the load")
+    logging.info("Sorted the dataframe by timestamp and adding the green energy generation then subtracting by the load")
      # Convert 'Load' to numeric
     for timestamp in unique_timestamps:
         # Filter rows for the current timestamp
@@ -231,7 +185,7 @@ def preprocess_data(df): #
     # Convert the list of dictionaries to a DataFrame
     df_processed = pd.DataFrame(aggregated_values).set_index('StartTime').fillna(0)
     df_processed = df_processed.reindex(sorted(df_processed.columns), axis=1)
-    print(f"{df.size-df_processed.size} data points has been processed in to the pre-processed dataframe")
+    logging.info(f"{df.size-df_processed.size} data points has been processed in to the pre-processed dataframe")
     
     df_processed = df_processed.drop("Surplus_UK",axis=1)
     df_processed = find_max(df_processed)
@@ -239,14 +193,11 @@ def preprocess_data(df): #
     return df_processed
        
 def find_max(df):
-    print("Finding the country with the most energy surplus")
-    # UK Problem with values between 0 and -1 
+    logging.info("Finding the country with the most energy surplus")
     df_copy = df.copy()
     df_size = df.size
-    # df_copy = df_copy.drop("Surplus_UK")
-    # df_copy[(df_copy >= -1) & (df_copy <= 0)] = np.nan
     df['Predicted_Surplus_Max'] = df_copy.idxmax(axis=1)
-    print("Created Predicted_Surplus_Max column")
+    logging.info("Created Predicted_Surplus_Max column")
     for column_name in df.columns[:-1]:
         df.loc[(df[column_name] >= -1) & (df[column_name] <= 0), column_name] = 0
 
@@ -260,47 +211,22 @@ def find_max(df):
          'Surplus_IT':6,
          'Surplus_PO':7,
          'Surplus_NL':8,
-        # Add more mappings as needed
     }
     df['Predicted_Surplus_Max'] = df['Predicted_Surplus_Max'].map(column_mapping)
     df['Predicted_Surplus_Max'] = df['Predicted_Surplus_Max'].shift(-1)
     df = df.iloc[1:-1]
 
-    print(f"{df.size-df_size} data points has been added to the dataframe")
+    logging.info(f"{df.size-df_size} data points has been added to the dataframe")
 
     return df
 
 def save_data(df, output_file):
-    # TODO: Save processed data to a CSV file
-    print(f"Saving dataframe with {df.size} data points")
-    df.to_csv('../data/test_final.csv', index=True)
+    logging.info(f"Saving dataframe with {df.size} data points")
+    df.to_csv(output_file, index=True)
     pass
 
 def fill_data(df):
     df = df.interpolate(method='linear',limit_direction='both', axis=0)
-    # for column_name in df.columns:
-    # # Iterate through each row
-    #     for i in range(1, len(df)):
-    #         if df.iloc[i][column_name] == 0:
-    #             # Find the previous non-zero value
-    #             prev_non_zero = df.iloc[i - 1][column_name] if i - 1 >= 0 else 0
-
-    #             # Find the next non-zero value
-    #             remaining_non_zero = df[column_name].iloc[i:].replace(0, pd.NA).dropna()
-
-    #             # Check if there are any non-zero values remaining
-    #             if not remaining_non_zero.empty:
-    #                 next_non_zero = remaining_non_zero.iloc[0]
-    #             else:
-    #                 next_non_zero = 0
-                
-    #             # Calculate the average of the previous and next non-zero values
-    #             average_value = (prev_non_zero + next_non_zero) / 2
-                
-    #             # Set the zero value to the calculated average
-    #             df.iloc[i, df.columns.get_loc(column_name)] = average_value    
-    
-    
     return df    
 
 def parse_arguments():
@@ -308,7 +234,7 @@ def parse_arguments():
     parser.add_argument(
         '--input_file',
         type=str,
-        default='data/raw_data.csv',
+        default='data',
         help='Path to the raw data file to process'
     )
     parser.add_argument(
@@ -327,9 +253,5 @@ def main(input_file, output_file):
 
 if __name__ == "__main__":
     args = parse_arguments()
-    df = load_data(os.path.join(os.path.split(os.getcwd())[0], 'data'))
-    df_clean = clean_data(df)
-    df_processed = preprocess_data(df_clean)
-    save_data(df_processed, "idk")
-
+    main(args.input_file, args.output_file)
     

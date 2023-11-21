@@ -6,8 +6,11 @@ import matplotlib.pyplot as plt
 import torch.nn as nn
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Dataset
-from sklearn.preprocessing import MinMaxScaler,StandardScaler
+import logging
+import sys
 
+logger = logging.getLogger()
+logging.basicConfig(level=logging.INFO, stream=sys.stdout) 
 
 
 # calculate accuracy
@@ -81,15 +84,13 @@ def load_data(file_path):
 
 # split and scale data
 def split_data(df,file_path):
-
     train = df.iloc[:, 1:-1]
-    
     target = df.iloc[:,-1]
     # debugging
     #print(df.shape)
     #print(train)
     X_train, X_val, y_train, y_val = train_test_split(train, target, test_size=0.2, shuffle=False)
-     # save validation Dataset
+    # save validation Dataset
     val_dataset = pd.concat([X_val, y_val], axis=1)
     val_dataset.to_csv(file_path, index=False)
 
@@ -105,7 +106,7 @@ def train_model(X_train,y_train,X_val,y_val):
     BATCH_SIZE = 32 
     input_size =  8 # Number of features (excluding timestamp)
     num_classes = 8  # Number of countries
-    num_epochs = 70
+    num_epochs = 150
     
     # store accuracy_stats and loss_stats
     accuracy_stats = {
@@ -133,7 +134,7 @@ def train_model(X_train,y_train,X_val,y_val):
     model.to(device)
 
     # start training 
-    print("Begin training.")
+    logging.info("Begin training.")
     for e in (range(1, num_epochs+1)):
 
         # TRAINING
@@ -182,17 +183,17 @@ def train_model(X_train,y_train,X_val,y_val):
         accuracy_stats['val'].append(test_epoch_acc/len(test_loader))
 
 
-        print(f'Epoch {e+0:03}: | Train Loss: {train_epoch_loss/len(train_loader):.5f} | Val Loss: {test_epoch_loss/len(test_loader):.5f} | Train Acc: {train_epoch_acc/len(train_loader):.3f}| Val Acc: {test_epoch_acc/len(test_loader):.3f}')
+        logging.info(f'Epoch {e+0:03}: | Train Loss: {train_epoch_loss/len(train_loader):.5f} | Val Loss: {test_epoch_loss/len(test_loader):.5f} | Train Acc: {train_epoch_acc/len(train_loader):.3f}| Val Acc: {test_epoch_acc/len(test_loader):.3f}')
     
-    print("Training finished. Calculating final accuracy...")
+    logging.info("Training finished. Calculating final accuracy...")
 
     # Evaluate the final accuracy on the training set
     final_train_acc = sum(accuracy_stats['train']) / len(accuracy_stats['train'])
-    print(f"Final Training Accuracy: {final_train_acc:.3f}")
+    logging.info(f"Final Training Accuracy: {final_train_acc:.3f}")
 
     # Evaluate the final accuracy on the validation set
     final_test_acc = sum(accuracy_stats['val']) / len(accuracy_stats['val'])
-    print(f"Final Validation Accuracy: {final_test_acc:.3f}")
+    logging.info(f"Final Validation Accuracy: {final_test_acc:.3f}")
 
     return model
 
@@ -212,20 +213,20 @@ def parse_arguments():
     parser.add_argument(
         '--input_file', 
         type=str, 
-        default='../data/test_final.csv', 
+        default='data/processed_data.csv', 
         help='Path to the processed data file to train the model'
     )
     parser.add_argument(
         '--model_file', 
         type=str, 
-        default='../models/model.pt', 
+        default='models/model.pt', 
         help='Path to save the trained model'
     )
     return parser.parse_args()
 
 def main(input_file, model_file):
     df = load_data(input_file)
-    X_train, X_val, y_train, y_val = split_data(df,"../data/test_dataset.csv") 
+    X_train, X_val, y_train, y_val = split_data(df,"data/test.csv") # split the 20% end of the data for prediction
     model = train_model(X_train,y_train,X_val,y_val)
     save_model(model,model_file)
 

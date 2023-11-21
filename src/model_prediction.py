@@ -2,11 +2,12 @@ import pandas as pd
 import argparse
 import torch
 from model_training import MulticlassClassification as mcc_model
-from model_training import ClassifierDataset,split_data
-import torch.nn.functional as F
-from torch.utils.data import DataLoader
 import json
+import logging
+import sys
 
+logger = logging.getLogger()
+logging.basicConfig(level=logging.INFO, stream=sys.stdout) 
 
 # load validation dataset
 def load_data(file_path):
@@ -21,12 +22,11 @@ def load_model(model_path):
     return model
 
 def make_predictions(df, model):
-
+    logging.info("Proceeding to make predictions")
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    # df = df.iloc[: , 1:10]
-    # df = df.iloc[:-20]
     df = df.iloc[:,:-1]
     model.to(device)
+
     #Evaluation mode
     model.eval()
     
@@ -38,7 +38,7 @@ def make_predictions(df, model):
     with torch.no_grad():
         output = model(input_data)
     
-    print(output)
+    # print(output)
     # Apply softmax to convert raw scores to probabilities
     probabilities = torch.log_softmax(output, dim = 1)
 
@@ -51,8 +51,9 @@ def make_predictions(df, model):
     return predicted_classes
 
 def save_predictions(predictions, predictions_file):
+    logging.info("Saving predictions in predictions.json")
+
     json_data = {"target": {}}
-   
     for i, num in enumerate(predictions):
         if i == 442: # stop at the required size  
             break
@@ -67,25 +68,24 @@ def parse_arguments():
     parser.add_argument(
         '--input_file', 
         type=str, 
-        default='../data/test_dataset.csv',
+        default='data/test.csv',
         help='Path to the test data file to make predictions'
     )
     parser.add_argument(
         '--model_file', 
         type=str, 
-        default='../models/model.pt',
+        default='models/model.pt',
         help='Path to the trained model file'
     )
     parser.add_argument(
         '--output_file', 
         type=str, 
-        default='../predictions/predictions.json',
+        default='predictions/predictions.json',
         help='Path to save the predictions'
     )
     return parser.parse_args()
 
 def main(input_file, model_file, output_file):
-    
     df = load_data(input_file)
     model = load_model(model_file)
     predictions = make_predictions(df, model)
