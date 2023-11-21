@@ -228,6 +228,8 @@ def save_data(df, output_file):
     for file in files:
         file_path = os.path.join('data/', file)
         try:
+            if ('test' in file):
+                continue
             os.unlink(file_path)
         except Exception as e:
             logging.info(e)

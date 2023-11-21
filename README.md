@@ -22,6 +22,12 @@ For Example:
 
 `./scripts/run_pipeline.sh 2020-01-01 2020-01-31 data/ data/processed_data.csv models/model.pt data/test.csv predictions/predictions.json`
 
+> [!WARNING] 
+> **The `test.csv` file, which is used for predicting will only be generated after the training process, as it is the remaining 20% of the data to be used for testing.** If the `test.csv` is missing in the `data` folder. Uncomment these line of code in `scripts/run_pipelin.sh` and run the pipeline again
+
+`echo "Starting model training..."
+python src/model_training.py --input_file="$processed_data_file" --model_file="$model_file"`
+
 ## The Challenge
 
 Our goal is to create a model capable of predicting the country (from a list of nine) that will have the most surplus of green energy in the next hour. The dataset is already provided through the use of the API of the ENTSO-E Transparency portal. Before utilizing the dataset, we need to filter and clean it up.

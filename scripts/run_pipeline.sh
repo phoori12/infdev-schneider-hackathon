@@ -24,8 +24,8 @@ echo "Starting data processing..."
 python src/data_processing.py --input_file="$raw_data_file" --output_file="$processed_data_file"
 
 # Run model_training.py
-echo "Starting model training..."
-python src/model_training.py --input_file="$processed_data_file" --model_file="$model_file"
+# echo "Starting model training..."
+# python src/model_training.py --input_file="$processed_data_file" --model_file="$model_file"
 
 # Run model_prediction.py
 echo "Starting prediction..."
