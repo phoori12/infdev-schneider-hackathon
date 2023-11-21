@@ -91,7 +91,7 @@ We acknowledged that the given dataset is a time-series problem and would requir
 
 Since time-series problem is sequential. We can exactly predict which country will have the most surplus energy  by looking ahead 1 row. After calculating which country generated the most surplus energy and gather it to the right most column of our dataset, we shift up the column and drop the last row of the dataset(this data went missing but only 1 row). Now we can use our multiclass classifier model to find the relationship between our features(energy surplus of each 9 countries) and our class(country that has the most surplus energy). 
 
-![Multiclass neural Network](https://www.researchgate.net/publication/334311674/figure/fig4/AS:963538122190856@1606736798392/The-proposed-Convolutional-Neural-Network-for-multiclass-classification-of-whole-infrared.png)
+![Multiclass neural Network](https://github.com/phoori12/infdev-schneider-hackathon/blob/main/image/cnn_multiclss.png)
 
 ## Encountered Problems
 
@@ -99,13 +99,13 @@ We've tried to implement MaxMinscaler and Standard Scaler before training of our
 
 ![Training Validation loss and accruracy](https://github.com/phoori12/infdev-schneider-hackathon/blob/main/image/Figure_1.png)
 
-As you can see from the graph, our model is not perfectly trained. Due to the fact that we spent too much time on data pre-processing, which leads to the facts that we have little time to improve on the model.
+As you can see from the graph, our model is not perfectly trained. Due to the fact that we spent too much time on data pre-processing, which leads to having little time to improve on the model.
 
 ### Model Prediction and Re-Evaluation <a name="model-prediction-and-re-evaluation"></a>
 
 In Model Prediction section we loaded our the best weights of our dataset that we saved in Model Training and set our model to evaluation mode, then let the model make predictions according to the test_dataset that we already debugged before. After we recieve the predictions in list data type, we then convert it to the required JSON file structure with save_prediction method.
 
-Remember that our test_dataset is 20% of the whole data which is 1/5 of the whole year, we need to cut off the unwanted data(data that are not the previous 442 hours before the year end).
+Remember that our test_dataset is 20% of the whole data which is about 1/5 of the whole year, we need to cut off the unwanted data(data that are not the previous 442 hours before the year end).
     
 ## Team Members
 
