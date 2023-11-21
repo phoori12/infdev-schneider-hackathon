@@ -80,7 +80,7 @@ def parse_arguments():
     parser.add_argument(
         '--output_file', 
         type=str, 
-        default='predictions.json',
+        default='predictions/predictions.json',
         help='Path to save the predictions'
     )
     return parser.parse_args()
