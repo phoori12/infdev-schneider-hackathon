@@ -17,7 +17,7 @@ predictions_file="$7"
 
 # Run data_ingestion.py
 echo "Starting data ingestion..."
-python src/data_ingestion.py --start_date="$start_date" --end_date="$end_date" --output_file="$raw_data_file"
+python src/data_ingestion.py --start_time="$start_date" --end_time="$end_date" --output_path="$raw_data_file"
 
 # Run data_processing.py
 echo "Starting data processing..."
