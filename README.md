@@ -89,9 +89,9 @@ We have divided our workflows into three sections:
 
 We acknowledged that the given dataset is a time-series problem and would require time-series forecasting model to achieve a decent accuracy. However, we came up with another approach that can convert time-series problem to normal multiclass-classifier model.
 
-Since time-series problem is sequential. We can exactly predict which country will have the most surplus energy  by looking ahead 1 row. After calculating which country generated the most surplus energy and gather it to the right most column of our dataset, we shift up the column and drop the last row of the dataset(this data went missing but only 1 row). Now we can use our multiclass classifier model to find the relationship between our features(energy surplus of each 9 countries) and our class(country that has the most surplus energy). 
-
 ![Multiclass neural Network](https://github.com/phoori12/infdev-schneider-hackathon/blob/main/image/cnn_multiclss.png)
+
+Since time-series problem is sequential. We can exactly predict which country will have the most surplus energy  by looking ahead 1 row. After calculating which country generated the most surplus energy and gather it to the right most column of our dataset, we shift up the column and drop the last row of the dataset(this data went missing but only 1 row). Now we can use our multiclass classifier model to find the relationship between our features(energy surplus of each 9 countries) and our class(country that has the most surplus energy). 
 
 ## Encountered Problems
 
@@ -109,12 +109,12 @@ Remember that our test_dataset is 20% of the whole data which is about 1/5 of th
     
 ## Team Members
 
-We are a team of students from the Technical University of Berlin with little to none experience of data science and deep learning. But still we find this as a good oppurtunity for us, as we learnt a lot from the process.
+We are a team of engineering students from the Technical University of Berlin with little to none experience of data science and deep learning. But still we find this as a good oppurtunity for us, as we've learnt a lot from the process.
 
 Our Team consists of:
 
-Woraphon Choaywong - Data Ingestion, Data Processing, Model Predictions, Pipeline monitoring
+[Woraphon Choaywong](https://github.com/phoori12) - Data Ingestion, Data Processing, Model Predictions, Pipeline monitoring
 
-Phurin Kitsakul - Deep Learning
+[Phurin Kitsakul](https://github.com/Bright8787) - Deep Learning
 
-Richie Jonathan - Data Cleaning and Model Training
+[Richie Jonathan](https://github.com/rjrichie) - Data Cleaning and Model Training
